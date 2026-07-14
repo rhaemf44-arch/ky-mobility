@@ -434,6 +434,15 @@ table.res-table-ins tr.ins-row:hover .ins-btn,
 </head>
 <body>
 
+<!-- ===== 로딩 스플래시 (자동 익명 로그인) ===== -->
+<div id="login-screen" style="display:flex;align-items:center;justify-content:center;height:100vh;width:100%;position:fixed;top:0;left:0;z-index:9999;background:var(--page-bg);">
+  <div style="text-align:center;">
+    <div style="display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;background:var(--gold);color:#fff;border-radius:12px;font-weight:800;font-size:22px;margin-bottom:14px;">KY</div>
+    <h2 style="font-size:20px;font-weight:700;margin:0;">KY MOBILITY</h2>
+    <p style="color:var(--ivory-dim);font-size:13px;margin-top:6px;">서버 연결 중…</p>
+  </div>
+</div>
+
 <!-- ===== Sidebar ===== -->
 <aside class="sidebar" id="sidebar">
   <div class="brand">
@@ -450,6 +459,10 @@ table.res-table-ins tr.ins-row:hover .ins-btn,
     <a data-v="audit" onclick="go(this)"><span class="ico">✓</span>예약 누락 검수<span class="cnt" id="nav-audit">0</span></a>
     <a data-v="vehicles" onclick="go(this)"><span class="ico">🚐</span>차량 관리<span class="cnt" id="nav-vehicles">66</span></a>
   </nav>
+  <div style="padding:8px 0;border-top:1px solid var(--line);margin-top:auto;display:flex;flex-direction:column;gap:6px;">
+    <button onclick="exportJSON()" style="width:100%;padding:7px;font-size:12px;background:var(--input);border:1px solid var(--line);border-radius:6px;cursor:pointer;">📦 JSON 백업</button>
+    <button onclick="importJSON()" style="width:100%;padding:7px;font-size:12px;background:var(--input);border:1px solid var(--line);border-radius:6px;cursor:pointer;">📂 JSON 가져오기</button>
+  </div>
   <div class="side-foot">
     경일렌트카<br>대표 장성달<br>010-4164-2820<br>사업자 607-87-00253
   </div>
@@ -784,7 +797,25 @@ table.res-table-ins tr.ins-row:hover .ins-btn,
 <div class="toast" id="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- Firebase SDK (compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
+/* ===== Firebase 설정 ===== */
+const firebaseConfig = {
+  apiKey: "AIzaSyBMyAbxG6O2kAgpi8KtIYWTpTkWLUGRppc",
+  authDomain: "ky-rent-system.firebaseapp.com",
+  projectId: "ky-rent-system",
+  storageBucket: "ky-rent-system.firebasestorage.app",
+  messagingSenderId: "436850406601",
+  appId: "1:436850406601:web:6a9f56ebfdb41c0fc40918",
+  measurementId: "G-DR5ZSRZ0GN"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
 /* ===== AI 파서 공개 설정 (OpenAI 키는 절대 브라우저에 넣지 않음) ===== */
 const SUPABASE_URL='';          // 예: https://YOUR_PROJECT.supabase.co
 const SUPABASE_ANON_KEY='';     // Supabase anon key만 입력
@@ -874,15 +905,112 @@ const VANS=['쏠라티','스타리아','스타렉스','카니발'];
 const SEED_RESERVATIONS=[{"id": "seed000", "name": "(미기재)", "phone": "010-6489-5486", "car": "올뉴카니발 (8168)", "start": "2026-07-06T14:00", "end": "2026-07-08T21:00", "days": "", "ins": "자포", "status": "wait", "pickup": "사무실 / 16현금자포", "ret": "사무실", "memo": ""}, {"id": "seed001", "name": "한국언론진흥원", "phone": "053-763-2116", "car": "K5 (1758)", "start": "2026-07-07T11:00", "end": "2026-07-08T11:00", "days": "", "ins": "일반면책", "status": "wait", "pickup": "남구 중앙대로200 2층 가스가득 / 배차9카드", "ret": "반차6카드", "memo": ""}, {"id": "seed002", "name": "(미기재)", "phone": "", "car": "K5 (1500)", "start": "2026-07-07T12:00", "end": "", "days": "", "ins": "일반면책", "status": "wait", "pickup": "사무실", "ret": "사무실", "memo": ""}, {"id": "seed003", "name": "(미기재)", "phone": "", "car": "소나타대차 (1042/1807)", "start": "2026-07-08T10:00", "end": "", "days": "", "ins": "일반면책", "status": "wait", "pickup": "효목점 블루핸즈", "ret": "사무실", "memo": ""}, {"id": "seed004", "name": "김길남", "phone": "010-4709-7271", "car": "카니발4.5세 7인승 (1868)", "start": "2026-07-09T10:30", "end": "2026-07-10T17:30", "days": "", "ins": "일반면책", "status": "wait", "pickup": "동대구지점 / 카모아", "ret": "사무실", "memo": ""}, {"id": "seed005", "name": "(미기재)", "phone": "010-2522-7875", "car": "스타리아11인승 (1190)", "start": "2026-07-10T08:00", "end": "2026-07-10T20:00", "days": "", "ins": "자포", "status": "wait", "pickup": "효성타운 109동 / 15자포 전날배차", "ret": "사무실", "memo": ""}, {"id": "seed006", "name": "강성영", "phone": "010-3527-5034", "car": "쏠라티 (1304)", "start": "2026-07-10T08:00", "end": "2026-07-12T20:00", "days": "", "ins": "자포", "status": "wait", "pickup": "동대구지점 / 75자포", "ret": "계15 잔60", "memo": ""}, {"id": "seed007", "name": "강동구", "phone": "010-3825-3881", "car": "쏠라티 (차없음)", "start": "2026-07-10T20:00", "end": "2026-07-11T20:00", "days": "", "ins": "자포", "status": "wait", "pickup": "들안로60길17 102동 / 30자포", "ret": "사무실", "memo": ""}, {"id": "seed008", "name": "진중열", "phone": "010-2076-1631", "car": "스타리아11인하브 (3477)", "start": "2026-07-10T20:00", "end": "2026-07-11T22:00", "days": "", "ins": "자포", "status": "wait", "pickup": "사무실 완납 17자포", "ret": "사무실", "memo": ""}, {"id": "seed009", "name": "(미기재)", "phone": "010-4506-0345", "car": "스타리아11인승 (1190)", "start": "2026-07-10T20:00", "end": "2026-07-11T19:00", "days": "", "ins": "자포", "status": "wait", "pickup": "옥포읍 금계길66 신교카프라자 15자포", "ret": "사무실", "memo": ""}, {"id": "seed010", "name": "박동규", "phone": "010-4827-3337", "car": "쏠라티-신차 (3478)", "start": "2026-07-11T07:00", "end": "2026-07-12T20:00", "days": "", "ins": "자포", "status": "wait", "pickup": "동대구지점 / 55자포", "ret": "계15 잔40", "memo": ""}, {"id": "seed011", "name": "이재현04년생", "phone": "010-6689-8256", "car": "올뉴카니발 (8168)", "start": "2026-07-11T08:00", "end": "2026-07-12T21:30", "days": "", "ins": "완전자차", "status": "wait", "pickup": "조암남로27길14 신라트리움 / 완전자차", "ret": "완납", "memo": ""}, {"id": "seed012", "name": "유화랑고객", "phone": "010-2595-9930", "car": "쏠라티 (1265)", "start": "2026-07-11T08:00", "end": "2026-07-12T20:00", "days": "", "ins": "자포", "status": "wait", "pickup": "칠성동2가538-13 금류아파트 50자포", "ret": "사무실", "memo": ""}, {"id": "seed013", "name": "유화랑", "phone": "", "car": "스타리아9인승 (3369)", "start": "2026-07-12T08:00", "end": "2026-07-12T20:00", "days": "", "ins": "일반면책", "status": "wait", "pickup": "407,000 세금계산서 완납 / 유화랑기사건", "ret": "사무실", "memo": ""}, {"id": "seed014", "name": "박소영", "phone": "010-7183-3148", "car": "카니발4.5 HEV (4407)", "start": "2026-07-13T11:00", "end": "2026-07-14T21:00", "days": "", "ins": "일반면책", "status": "wait", "pickup": "한실로 117 302동 1705호", "ret": "계약금5 잔금34", "memo": ""}, {"id": "seed015", "name": "일심재활원", "phone": "010-6231-1908", "car": "신카2대", "start": "2026-07-15T09:00", "end": "2026-07-15T20:00", "days": "", "ins": "일반면책", "status": "wait", "pickup": "문카30", "ret": "사무실", "memo": ""}, {"id": "seed016", "name": "(미기재)", "phone": "010-3510-2518", "car": "카니발4.5세9인승 (1448)", "start": "2026-07-16T20:00", "end": "2026-07-19T20:00", "days": "", "ins": "자포", "status": "wait", "pickup": "동구 국채보상로165길30 강변아파트 / 45현자포", "ret": "사무실", "memo": ""}, {"id": "seed017", "name": "8명탑승", "phone": "010-2513-3071", "car": "스타리아9-11인승 (3369/1099)", "start": "2026-07-17T07:00", "end": "2026-07-17T20:00", "days": "", "ins": "자포", "status": "wait", "pickup": "15자포", "ret": "사무실", "memo": ""}, {"id": "seed018", "name": "이상준", "phone": "010-4670-1353", "car": "카니발4.5세9하브 (4604)", "start": "2026-07-17T08:00", "end": "2026-07-19T18:00", "days": "", "ins": "완전자차", "status": "wait", "pickup": "명덕로241 완전자차 완납", "ret": "사무실", "memo": ""}, {"id": "seed019", "name": "이원재", "phone": "010-3555-2283", "car": "올뉴카니발 (8168)", "start": "2026-07-17T09:00", "end": "2026-07-19T17:00", "days": "", "ins": "일반면책", "status": "wait", "pickup": "봉덕 사무실 카모아", "ret": "사무실", "memo": ""}, {"id": "seed020", "name": "김준영", "phone": "010-3383-7488", "car": "카니발4.5하브 (4604)", "start": "2026-07-17T09:30", "end": "2026-07-18T19:00", "days": "", "ins": "일반면책", "status": "wait", "pickup": "카모아 맞이주차장", "ret": "사무실", "memo": ""}, {"id": "seed021", "name": "신차 배차", "phone": "010-7520-8001", "car": "쏠라티 (1304)", "start": "2026-07-17T20:00", "end": "2026-07-20T20:00", "days": "", "ins": "자포", "status": "wait", "pickup": "75자포 사무실", "ret": "계10 잔65", "memo": ""}, {"id": "seed022", "name": "(미기재)", "phone": "010-6635-6685", "car": "카니발7-9하브 (2904)", "start": "2026-07-17T20:00", "end": "2026-07-19T20:00", "days": "", "ins": "자포", "status": "wait", "pickup": "만촌우방2차 6명탑승 30자포 / 세금계산서 하연부별", "ret": "사무실", "memo": ""}, {"id": "seed023", "name": "김병주", "phone": "010-9578-7383", "car": "스타리아9인하브 (4415)", "start": "2026-07-18T08:00", "end": "2026-07-19T08:00", "days": "", "ins": "완전자차", "status": "wait", "pickup": "범어자이102동 / 완전자차 / 19자포완납", "ret": "사무실", "memo": ""}, {"id": "seed024", "name": "김동은", "phone": "010-9365-1915", "car": "카니발9인승 (4407/4604)", "start": "2026-07-24T07:00", "end": "2026-07-25T20:00", "days": "", "ins": "자포", "status": "wait", "pickup": "30자포 전날배차", "ret": "사무실", "memo": ""}, {"id": "seed025", "name": "김태진", "phone": "010-8028-2201", "car": "올뉴카니발 (8168)", "start": "2026-07-25T12:00", "end": "2026-07-26T14:00", "days": "", "ins": "완전자차", "status": "wait", "pickup": "동대구지점 / 완전자차", "ret": "완납182,000", "memo": ""}, {"id": "seed026", "name": "류재열", "phone": "010-5808-8225", "car": "카니발4.5 9인승 (1448)", "start": "2026-07-27T09:00", "end": "2026-07-29T21:00", "days": "", "ins": "일반면책", "status": "wait", "pickup": "북구 학남로17길 12-3 / 일반자차", "ret": "40자포완납", "memo": ""}, {"id": "seed027", "name": "(미기재)", "phone": "010-5488-6006", "car": "중형-가계약", "start": "2026-07-27T10:00", "end": "2026-07-29T10:00", "days": "", "ins": "자포", "status": "wait", "pickup": "사무실 / 17자포현금", "ret": "사무실", "memo": ""}, {"id": "seed028", "name": "배기현", "phone": "010-9359-2556", "car": "쏠라티 (3478)", "start": "2026-07-29T20:00", "end": "2026-08-02T14:00", "days": "", "ins": "자포", "status": "wait", "pickup": "침산코오로하늘채 / 90자포 / 시간추가시10만", "ret": "계15 잔75 4일사용", "memo": ""}, {"id": "seed029", "name": "달서구관광카", "phone": "010-6556-9221", "car": "스타리아11인승", "start": "2026-07-30T07:00", "end": "2026-08-02T20:00", "days": "", "ins": "자포", "status": "wait", "pickup": "신차로 40자포", "ret": "사무실", "memo": ""}, {"id": "seed030", "name": "김상윤", "phone": "010-4650-4348", "car": "카니발4.5 9인승 (1448)", "start": "2026-08-01T09:00", "end": "2026-08-02T18:00", "days": "", "ins": "일반면책", "status": "wait", "pickup": "다사읍 죽곡리25-6 / 카모아", "ret": "사무실", "memo": ""}, {"id": "seed031", "name": "안우진", "phone": "010-5717-5212", "car": "올뉴카니발 (8168)", "start": "2026-08-01T13:00", "end": "2026-08-02T13:00", "days": "", "ins": "일반면책", "status": "wait", "pickup": "경북대IT 1호관 옆 학생주차장 / 카모아", "ret": "사무실", "memo": ""}, {"id": "seed032", "name": "최종화", "phone": "010-7309-7389", "car": "쏠라티 (3478변경X)", "start": "2026-08-03T07:00", "end": "2026-08-06T20:00", "days": "", "ins": "자포", "status": "wait", "pickup": "봉덕사무실 / 80만원 자포-완납", "ret": "사무실", "memo": ""}, {"id": "seed033", "name": "옥민", "phone": "010-8947-3122", "car": "카니발9인승하브", "start": "2026-08-03T09:30", "end": "2026-08-04T19:00", "days": "", "ins": "완전자차", "status": "wait", "pickup": "검단로115 완전자차", "ret": "32완납", "memo": ""}, {"id": "seed034", "name": "일심재활원", "phone": "010-9335-4908", "car": "스타리아2대", "start": "2026-08-13T08:00", "end": "2026-08-14T20:00", "days": "", "ins": "완전자차", "status": "wait", "pickup": "문카 84만원 결제예정 / 스타리아 인승확인 (완전자차시 18추가 면책30) / 스타리아 1대당 28만원", "ret": "사무실", "memo": ""}, {"id": "seed035", "name": "일심재활원", "phone": "010-9335-4908", "car": "카니발1대", "start": "2026-08-13T08:00", "end": "2026-08-14T20:00", "days": "", "ins": "일반면책", "status": "wait", "pickup": "카니발 1대 28만원", "ret": "사무실", "memo": ""}, {"id": "seed036", "name": "조예담", "phone": "010-7538-7525", "car": "카니발4세대 (2543)", "start": "2026-08-17T07:00", "end": "2026-08-18T19:00", "days": "", "ins": "일반면책", "status": "wait", "pickup": "동대구지점 완납 97년생", "ret": "사무실", "memo": ""}, {"id": "seed037", "name": "김찬희", "phone": "010-9986-9576", "car": "올뉴카니발 (8168)", "start": "2026-08-17T07:00", "end": "2026-08-18T19:00", "days": "", "ins": "일반면책", "status": "wait", "pickup": "동대구지점 완납 04년생", "ret": "사무실", "memo": ""}, {"id": "seed038", "name": "엄서정", "phone": "010-7243-7472", "car": "카니발4세대 (2521)", "start": "2026-08-18T09:00", "end": "2026-08-20T20:00", "days": "", "ins": "일반면책", "status": "wait", "pickup": "대구역힐스센트럴 467,000", "ret": "계약금50,000받음", "memo": ""}, {"id": "seed039", "name": "제주고지숙", "phone": "010-8661-7333", "car": "제주-배구팀 (쏠라티)", "start": "2026-08-21T10:00", "end": "2026-08-23T18:00", "days": "", "ins": "일반면책", "status": "wait", "pickup": "대구공항 / 주유포함70(현) / 카드77만", "ret": "사무실", "memo": ""}, {"id": "seed040", "name": "사장님", "phone": "", "car": "쏠라티 (1265)", "start": "2026-08-31T07:00", "end": "2026-09-01T20:00", "days": "", "ins": "자포", "status": "wait", "pickup": "삼정회 50자포", "ret": "사무실", "memo": ""}, {"id": "seed041", "name": "(미기재)", "phone": "010-4464-9003", "car": "카니발4.5하브9인 (4604/4407)", "start": "2026-09-24T08:00", "end": "2026-09-27T20:00", "days": "", "ins": "일반면책", "status": "wait", "pickup": "안심역코오롱하늘채", "ret": "잔50", "memo": ""}, {"id": "seed042", "name": "이원주", "phone": "010-6505-4598", "car": "카니발4.5세대", "start": "2026-09-25T08:00", "end": "2026-09-26T21:00", "days": "", "ins": "일반면책", "status": "wait", "pickup": "입석로2길2 102호 / 일반자차", "ret": "계10 잔20", "memo": ""}];
 const STORE='ky_reservations_v2';
 let data=[]; let filter='all'; let schedTab='all'; let editId=null; let undoStack=[];
+let _firestoreReady=false; let _unsubFirestore=null; let _currentUser=null;
+const RESERVATIONS_COL='reservations';
 
+/* ===== Firestore 실시간 리스너 ===== */
+function startFirestoreSync(){
+  if(_unsubFirestore)_unsubFirestore();
+  _unsubFirestore=db.collection(RESERVATIONS_COL).onSnapshot(snap=>{
+    _firestoreReady=true;
+    const newData=[];
+    snap.forEach(doc=>newData.push(doc.data()));
+    newData.sort((a,b)=>(a.start||'').localeCompare(b.start||''));
+    data=newData.map(normalizeReservationLocationRecord);
+    try{localStorage.setItem(STORE,JSON.stringify(data))}catch(e){}
+    render();
+  },err=>{
+    console.error('Firestore 리스너 오류:',err);
+    toast('서버 연결 오류 — 오프라인 데이터 사용 중');
+    _firestoreReady=false;
+  });
+}
+
+/* ===== load: Firestore 우선, localStorage 폴백 ===== */
 function load(){
   try{data=JSON.parse(localStorage.getItem(STORE))||[]}catch(e){data=[]}
   if(!data.length&&typeof SEED_RESERVATIONS!=='undefined')data=JSON.parse(JSON.stringify(SEED_RESERVATIONS));
-  const before=JSON.stringify(data);data=data.map(normalizeReservationLocationRecord);if(JSON.stringify(data)!==before)save();
+  const before=JSON.stringify(data);data=data.map(normalizeReservationLocationRecord);if(JSON.stringify(data)!==before)saveLocal();
 }
+
+/* ===== save: Firestore + localStorage 이중 저장 ===== */
+function save(){
+  saveLocal();
+  if(!_firestoreReady)return;
+  /* Firestore에 개별 문서 단위로 저장 (전체 덮어쓰기 방지) */
+  const batch=db.batch();
+  const ids=new Set(data.map(r=>r.id));
+  data.forEach(r=>{
+    batch.set(db.collection(RESERVATIONS_COL).doc(r.id),r);
+  });
+  batch.commit().catch(err=>{
+    console.error('Firestore 저장 오류:',err);
+    toast('서버 저장 실패 — 로컬에는 저장됨');
+  });
+}
+function saveLocal(){
+  try{localStorage.setItem(STORE,JSON.stringify(data))}catch(e){
+    toast('⚠️ 로컬 저장 실패 — 용량 부족');
+    console.error('localStorage 저장 실패:',e);
+  }
+}
+
+/* ===== 단일 레코드 Firestore 삭제 ===== */
+function deleteFromFirestore(id){
+  if(!_firestoreReady)return;
+  db.collection(RESERVATIONS_COL).doc(id).delete().catch(err=>{
+    console.error('Firestore 삭제 오류:',err);
+  });
+}
+
+/* ===== 기존 localStorage → Firestore 1회 마이그레이션 ===== */
+async function migrateToFirestore(){
+  if(!_firestoreReady||!data.length)return;
+  const snap=await db.collection(RESERVATIONS_COL).limit(1).get();
+  if(!snap.empty)return; // 이미 데이터 있으면 스킵
+  const batch=db.batch();
+  data.forEach(r=>{
+    batch.set(db.collection(RESERVATIONS_COL).doc(r.id),r);
+  });
+  await batch.commit();
+  toast('기존 예약 '+data.length+'건을 서버에 업로드했습니다');
+}
+
+/* ===== JSON 백업 내보내기/가져오기 ===== */
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='KY_예약백업_'+todayStr()+'.json';a.click();
+  URL.revokeObjectURL(url);
+  toast('JSON 백업 다운로드 완료');
+}
+function importJSON(){
+  const inp=document.createElement('input');inp.type='file';inp.accept='.json';
+  inp.onchange=e=>{
+    const f=e.target.files[0];if(!f)return;
+    const r=new FileReader();
+    r.onload=ev=>{
+      try{
+        const arr=JSON.parse(ev.target.result);
+        if(!Array.isArray(arr))throw new Error('배열 아님');
+        if(!confirm(arr.length+'건을 가져올까요? 기존 예약에 합칩니다 (같은 id는 덮어씀)'))return;
+        snapshot();
+        arr.map(normalizeReservationLocationRecord).forEach(s=>{
+          const i=data.findIndex(x=>x.id===s.id);
+          if(i>=0)data[i]=s;else data.push(s);
+        });
+        save();render();
+        toast(arr.length+'건 가져오기 완료');
+      }catch(err){toast('JSON 파일 읽기 실패');console.error(err)}
+    };
+    r.readAsText(f);
+  };
+  inp.click();
+}
+
 function loadSeed(){if(confirm('예약현황표 43건을 불러올까요? (현재 예약은 유지되고 중복 id는 덮어씀)')){SEED_RESERVATIONS.map(normalizeReservationLocationRecord).forEach(s=>{const i=data.findIndex(x=>x.id===s.id);if(i>=0)data[i]=s;else data.push(s)});save();render();toast('예약현황표 '+SEED_RESERVATIONS.length+'건 불러옴')}}
-function clearAll(){if(confirm('모든 예약을 삭제할까요? (되돌릴 수 없음)')){snapshot();data=[];save();render();toast('전체 삭제됨')}}
-function save(){localStorage.setItem(STORE,JSON.stringify(data))}
+function clearAll(){if(confirm('모든 예약을 삭제할까요? (되돌릴 수 없음)')){snapshot();const oldIds=data.map(r=>r.id);data=[];save();if(_firestoreReady){const batch=db.batch();oldIds.forEach(id=>batch.delete(db.collection(RESERVATIONS_COL).doc(id)));batch.commit().catch(e=>console.error(e))}render();toast('전체 삭제됨')}}
 function snapshot(){undoStack.push(JSON.stringify(data));if(undoStack.length>10)undoStack.shift()}
 function undo(){if(!undoStack.length){toast('되돌릴 내역이 없습니다');return}data=JSON.parse(undoStack.pop());save();render();toast('되돌렸습니다')}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
@@ -2043,7 +2171,7 @@ function editRes(id){const original=data.find(x=>x.id===id);if(!original)return;
   set('f-memo',r.memo);applyLocationPairToForm(r.pickup,r.ret,{moveNote:false});
   editId=id;document.getElementById('save-btn').textContent='수정 저장';document.getElementById('edit-hint').textContent='수정 중';
   go2('dashboard');window.scrollTo({top:0,behavior:'smooth'});}
-function delRes(id){if(!confirm('이 예약을 삭제할까요?'))return;snapshot();data=data.filter(x=>x.id!==id);save();render();toast('삭제되었습니다')}
+function delRes(id){if(!confirm('이 예약을 삭제할까요?'))return;snapshot();data=data.filter(x=>x.id!==id);save();deleteFromFirestore(id);render();toast('삭제되었습니다')}
 function renderPast(){
   const el=document.getElementById('past-list');if(!el)return;
   const now=new Date();const q=(document.getElementById('past-search')?.value||'').toLowerCase();
@@ -2854,7 +2982,22 @@ function runKakaoAnalyzerTests(){
 
 /* ===== clock ===== */
 function tick(){const d=new Date();const dn=['일','월','화','수','목','금','토'];
-  document.getElementById('clock').textContent=`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} (${dn[d.getDay()]}) ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`}
+  document.getElementById('clock').textContent=`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} (${dn[d.getDay()]}) ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  autoCompletePastReservations();}
+
+/* ===== 대여종료 시각이 지난 예약을 자동으로 '완료(대여종료)' 상태로 전환 ===== */
+function autoCompletePastReservations(){
+  const now=new Date();
+  let changed=false;
+  data.forEach(r=>{
+    if(!r.end)return; // 종료일시 없으면 건너뜀
+    if(r.status==='cancelled'||r.status==='done')return; // 취소·이미완료는 제외
+    const endDate=new Date(r.end);
+    if(isNaN(endDate.getTime()))return;
+    if(endDate<now){ r.status='done'; changed=true; }
+  });
+  if(changed){ save(); render(); }
+}
 
 /* 개발 점검용: 화면 너비별 대시보드 배치와 날짜 입력칸을 데이터 속성으로 기록한다. */
 function runLayoutSelfTest(){
@@ -3046,7 +3189,40 @@ function auditOpenMatched(i){const row=reservationAuditState.rows[i],id=row?.fin
 function auditIgnoreRow(i){if(!reservationAuditState.rows[i])return;reservationAuditState.rows[i].ignored=true;renderReservationAudit();const miss=reservationAuditState.rows.filter(r=>!r.ignored&&['LIKELY_MISSING','POSSIBLE_MISSING'].includes(r.finalVerdict)).length;document.getElementById('nav-audit').textContent=miss}
 function clearReservationAudit(){reservationAuditState={rows:[],excludedRows:[],raw:'',fileName:'',messageCount:0,clusterCount:0,expenseCount:0,noiseCount:0,aiCount:0,claudeCount:0};const f=document.getElementById('audit-file');if(f)f.value='';document.getElementById('audit-file-name').textContent='파일을 선택해 주세요';document.getElementById('audit-progress').classList.remove('on');document.getElementById('audit-results').className='audit-empty';document.getElementById('audit-results').textContent='카카오톡 TXT 파일을 선택한 후 ‘검수 시작’을 누르세요.';document.getElementById('nav-audit').textContent='0';renderReservationAudit()}
 
-loadPlateMap();load();setupVehicleNumberAutoFill();setupPickupReturnSync();render();tick();setInterval(tick,30000);const auditFrom=document.getElementById('audit-date-from');if(auditFrom&&!auditFrom.value)auditFrom.value=todayStr();
+/* ===== 자동 익명 로그인 ===== */
+function doLogin(){
+  auth.signInAnonymously().catch(err=>{
+    console.error('익명 로그인 실패:',err);
+    toast('서버 연결 실패 — 오프라인 모드로 사용합니다');
+    document.getElementById('login-screen').style.display='none';
+    loadPlateMap();load();setupVehicleNumberAutoFill();setupPickupReturnSync();render();tick();setInterval(tick,30000);
+    const auditFrom=document.getElementById('audit-date-from');if(auditFrom&&!auditFrom.value)auditFrom.value=todayStr();
+  });
+}
+
+/* ===== 앱 초기화 (로그인 후 실행) ===== */
+function initApp(){
+  loadPlateMap();load();setupVehicleNumberAutoFill();setupPickupReturnSync();render();tick();setInterval(tick,30000);
+  const auditFrom=document.getElementById('audit-date-from');if(auditFrom&&!auditFrom.value)auditFrom.value=todayStr();
+  startFirestoreSync();
+  migrateToFirestore();
+}
+
+/* ===== Firebase Auth 상태 감시 ===== */
+auth.onAuthStateChanged(user=>{
+  const loginScreen=document.getElementById('login-screen');
+  if(user){
+    _currentUser=user;
+    loginScreen.style.display='none';
+    initApp();
+  }else{
+    _currentUser=null;
+    if(_unsubFirestore){_unsubFirestore();_unsubFirestore=null}
+    _firestoreReady=false;
+    doLogin(); // 자동 익명 로그인 시도
+  }
+});
+
 // 개발 점검용: 파일 주소 뒤에 #ai-self-test를 붙이면 무과금 회귀 테스트를 자동 실행한다.
 if(location.hash==='#ai-self-test')setTimeout(runParserTest,0);
 if(location.hash==='#ai-fallback-test')setTimeout(()=>{rawEl().value='확인 필요 예약';smartParse()},0);
