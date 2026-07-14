@@ -2346,7 +2346,7 @@ function render(){
   document.getElementById('s-active').innerHTML=data.filter(r=>r.status==='active').length+'<small>건</small>';
   document.getElementById('s-wait').innerHTML=data.filter(r=>r.status==='wait').length+'<small>건</small>';
   document.getElementById('s-flag').innerHTML=flag+'<small>건</small>';
-  document.getElementById('nav-res').textContent=data.length;
+  document.getElementById('nav-res').textContent=data.filter(r=>!(r.end&&new Date(r.end)<new Date())).length;
 }
 function paint(id,rows){
   const el=document.getElementById(id);if(!el)return;
@@ -2360,7 +2360,9 @@ function paint(id,rows){
 function renderReservations(){
   const el=document.getElementById('list2');if(!el)return;
   const q=(document.getElementById('search2').value||'').toLowerCase();
-  const rows=data.filter(r=>!q||(r.name+' '+r.car+' '+r.phone+' '+(r.pickup||'')).toLowerCase().includes(q))
+  const now=new Date();
+  const rows=data.filter(r=>!(r.end&&new Date(r.end)<now)) // 반납시각 지난 예약은 '지난 예약' 탭에서만 표시
+    .filter(r=>!q||(r.name+' '+r.car+' '+r.phone+' '+(r.pickup||'')).toLowerCase().includes(q))
     .sort((a,b)=>String(a.start||'').localeCompare(String(b.start||'')));
   const t=todayStr();
   const insBtn=(idx,label)=>`<tr class="ins-row"><td colspan="10"><button class="ins-btn" onclick="insertBetween(${idx})">＋ ${label}</button></td></tr>`;
