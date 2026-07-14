@@ -541,9 +541,12 @@ table.res-table-ins tr.ins-row:hover .ins-btn,
               </div>
               <div class="reservation-row-location">
                 <div class="field"><label>배차 위치</label><input id="f-pickup" placeholder="사무실"></div>
-                <div class="field"><label>회차 위치</label><input id="f-return" placeholder="사무실"></div>
+                <div class="field"><label>회차 위치 <span style="font-weight:400;color:var(--ivory-dim);font-size:11px">(비우면 배차와 동일)</span></label><input id="f-return" placeholder="배차와 동일"></div>
               </div>
-              <div class="field reservation-row-memo"><label>금액 / 메모</label><input id="f-memo" placeholder="자포 총액 · 완납 등"></div>
+              <div class="reservation-row-location">
+                <div class="field"><label>잔금</label><input id="f-balance" placeholder="예: 30만원 / 완납"></div>
+                <div class="field reservation-row-memo"><label>금액 / 메모</label><input id="f-memo" placeholder="자포 총액 · 완납 등"></div>
+              </div>
               <div class="reservation-actions">
                 <button class="btn btn-gold btn-block" onclick="saveRes()" id="save-btn">예약 저장</button>
                 <button class="btn btn-ghost btn-sm" onclick="clearForm()">초기화</button>
@@ -2151,24 +2154,24 @@ function saveRes(){
   // 입력 직후 포커스를 옮기지 않고 저장해도 차량번호를 차종명으로 변환한다.
   applyVehicleNumberInput({notify:false});
   const pickup=val('f-pickup')||'사무실';
-  let ret=val('f-return');if(!returnLocationManuallyEdited||!ret)ret=pickup;
+  let ret=val('f-return').trim()||pickup; // 회차 위치 비면 배차지와 동일
   const r=normalizeReservationLocationRecord({id:editId||uid(),name:val('f-name'),phone:val('f-phone'),car:val('f-car'),
     start:val('f-start'),end:val('f-end'),days:val('f-days'),ins:val('f-ins'),
-    status:val('f-status'),pickup,ret,memo:val('f-memo')});
+    status:val('f-status'),pickup,ret,memo:val('f-memo'),balance:val('f-balance').trim()});
   if(!r.name){toast('고객명을 입력하세요');return}
   snapshot();
   if(editId){const i=data.findIndex(x=>x.id===editId);data[i]=r;toast('수정되었습니다')}
   else{data.unshift(r);toast('예약이 등록되었습니다')}
   save();clearForm();render();
 }
-function clearForm(){['f-name','f-phone','f-car','f-start','f-end','f-days','f-pickup','f-return','f-memo'].forEach(i=>set(i,''));
+function clearForm(){['f-name','f-phone','f-car','f-start','f-end','f-days','f-pickup','f-return','f-memo','f-balance'].forEach(i=>set(i,''));
   document.getElementById('f-ins').value='자포';document.getElementById('f-status').value='wait';
   returnLocationManuallyEdited=false;previousPickupValue='';
   editId=null;document.getElementById('save-btn').textContent='예약 저장';document.getElementById('edit-hint').textContent='';const status=document.getElementById('ai-parse-status');status.textContent='';status.classList.remove('on');}
 function editRes(id){const original=data.find(x=>x.id===id);if(!original)return;const r=normalizeReservationLocationRecord(original);
   set('f-name',r.name);set('f-phone',r.phone);set('f-car',r.car);set('f-start',r.start);set('f-end',r.end);
   set('f-days',r.days);document.getElementById('f-ins').value=r.ins||'자포';document.getElementById('f-status').value=r.status||'wait';
-  set('f-memo',r.memo);applyLocationPairToForm(r.pickup,r.ret,{moveNote:false});
+  set('f-memo',r.memo);set('f-balance',r.balance||'');applyLocationPairToForm(r.pickup,r.ret,{moveNote:false});
   editId=id;document.getElementById('save-btn').textContent='수정 저장';document.getElementById('edit-hint').textContent='수정 중';
   go2('dashboard');window.scrollTo({top:0,behavior:'smooth'});}
 function delRes(id){if(!confirm('이 예약을 삭제할까요?'))return;snapshot();data=data.filter(x=>x.id!==id);save();deleteFromFirestore(id);render();toast('삭제되었습니다')}
@@ -2236,7 +2239,7 @@ function statusMini(s){const map={active:['운행중','b-active'],done:['완료'
 function resTable(rows){
   const t=todayStr();
   const head=`<thead><tr>
-    <th>대여</th><th>반납</th><th>차량</th><th>번호</th><th>임차인</th><th>연락처</th><th>배차</th><th>회차</th><th>상태</th><th></th>
+    <th>대여</th><th>반납</th><th>차량</th><th>번호</th><th>임차인</th><th>연락처</th><th>배차</th><th>회차</th><th>잔금</th><th>상태</th><th></th>
   </tr></thead>`;
   const body=rows.map(r=>{
     const today=(r.start||'').slice(0,10)===t;const conflict=hasConflict(r);
@@ -2251,6 +2254,7 @@ function resTable(rows){
       ${ed('phone','',r.phone)}
       ${ed('pickup','c-memo',r.pickup)}
       ${ed('ret','c-memo',r.ret||r.pickup||'사무실')}
+      ${ed('balance','c-bal',r.balance)}
       <td>${statusMini(r.status)}</td>
       <td><div class="rowact"><button onclick="event.stopPropagation();cycleStatus('${r.id}')" title="상태변경">↻</button><button onclick="event.stopPropagation();editRes('${r.id}')" title="전체수정">✎</button><button class="del" onclick="event.stopPropagation();delRes('${r.id}')" title="삭제">✕</button></div></td>
     </tr>`;
@@ -2365,9 +2369,9 @@ function renderReservations(){
     .filter(r=>!q||(r.name+' '+r.car+' '+r.phone+' '+(r.pickup||'')).toLowerCase().includes(q))
     .sort((a,b)=>String(a.start||'').localeCompare(String(b.start||'')));
   const t=todayStr();
-  const insBtn=(idx,label)=>`<tr class="ins-row"><td colspan="10"><button class="ins-btn" onclick="insertBetween(${idx})">＋ ${label}</button></td></tr>`;
+  const insBtn=(idx,label)=>`<tr class="ins-row"><td colspan="11"><button class="ins-btn" onclick="insertBetween(${idx})">＋ ${label}</button></td></tr>`;
   const head=`<thead><tr>
-    <th>대여</th><th>반납</th><th>차량</th><th>번호</th><th>임차인</th><th>연락처</th><th>배차</th><th>회차</th><th>상태</th><th></th>
+    <th>대여</th><th>반납</th><th>차량</th><th>번호</th><th>임차인</th><th>연락처</th><th>배차</th><th>회차</th><th>잔금</th><th>상태</th><th></th>
   </tr></thead>`;
   let body='';
   // 맨 위 삽입
@@ -2383,6 +2387,7 @@ function renderReservations(){
       ${ed('carName','c-name',carName)}${ed('plate','c-plate',plate)}
       <td class="c-name editable" data-id="${r.id}" data-field="name" onclick="startEdit(this)">${esc(r.name||'-')}${conflict?' <span class="mini-badge b-flag">중복</span>':''}</td>
       ${ed('phone','',r.phone)}${ed('pickup','c-memo',r.pickup)}${ed('ret','c-memo',r.ret||r.pickup||'사무실')}
+      ${ed('balance','c-bal',r.balance)}
       <td>${statusMini(r.status)}</td>
       <td><div class="rowact"><button onclick="event.stopPropagation();cycleStatus('${r.id}')" title="상태변경">↻</button><button onclick="event.stopPropagation();editRes('${r.id}')" title="전체수정">✎</button><button class="del" onclick="event.stopPropagation();delRes('${r.id}')" title="삭제">✕</button></div></td>
     </tr>`;
@@ -2822,10 +2827,10 @@ function exportExcel(){
     const carName=String(r.car||'').replace(/\s*\(.+?\)/,'').trim();
     return {대여예정일시:fmt(r.start)==='-'?'':fmt(r.start),반납예정일시:fmt(r.end)==='-'?'':fmt(r.end),
       차량:carName,차량번호:plate,임차인명:r.name,임차인연락처:r.phone,배차:r.pickup,회차:r.ret||r.pickup||'사무실',
-      보험:r.ins,무보험차상해:'불가',일수:r.days,상태:map[r.status]||r.status};
+      잔금:r.balance||'',보험:r.ins,무보험차상해:'불가',일수:r.days,상태:map[r.status]||r.status};
   });
   const ws=XLSX.utils.json_to_sheet(out);
-  ws['!cols']=[{wch:15},{wch:15},{wch:14},{wch:10},{wch:14},{wch:15},{wch:26},{wch:22},{wch:8},{wch:10},{wch:5},{wch:7}];
+  ws['!cols']=[{wch:15},{wch:15},{wch:14},{wch:10},{wch:14},{wch:15},{wch:26},{wch:22},{wch:12},{wch:8},{wch:10},{wch:5},{wch:7}];
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'예약');
   XLSX.writeFile(wb,`KY_예약_${todayStr()}.xlsx`);toast('엑셀 파일이 저장되었습니다');
 }
