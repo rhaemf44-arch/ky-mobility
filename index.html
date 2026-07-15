@@ -511,7 +511,7 @@ table.res-table-ins tr.ins-row:hover .ins-btn,
               <div id="parser-test-result"></div>
             </details>
             <div class="kakao-analysis" id="kakao-analysis-panel">
-              <div class="kakao-analysis-head"><b>카톡 예약 이벤트 분석</b><span id="kakao-analysis-summary"></span></div>
+              <div class="kakao-analysis-head"><b>카톡 예약 이벤트 분석</b><span id="kakao-analysis-summary"></span><button class="btn btn-gold btn-sm" style="margin-left:auto" onclick="uploadAllKakao()">⬆ 신규 예약 일괄 등록</button></div>
               <div class="kakao-analysis-body" id="kakao-analysis-results"></div>
             </div>
           </div>
@@ -687,7 +687,7 @@ table.res-table-ins tr.ins-row:hover .ins-btn,
       <div class="card">
         <div class="card-h">
           <h2>카카오톡 예약 누락 검수</h2>
-          <span class="hint">로컬 비교 + OpenAI 정밀 분석 + Claude 교차검증</span>
+          <span class="hint">로컬 비교 + Claude AI 정밀 분석</span>
         </div>
         <div class="card-b">
           <div class="audit-mode-grid" role="radiogroup" aria-label="AI 검수 방식">
@@ -697,11 +697,11 @@ table.res-table-ins tr.ins-row:hover .ins-btn,
             </label>
             <label class="audit-mode-card on">
               <input type="radio" name="audit-mode" value="PRECISE" checked>
-              <span><b>정밀 검수</b><small>불확실한 후보를 OpenAI로 확인</small></span>
+              <span><b>정밀 검수</b><small>불확실한 후보를 Claude로 확인</small></span>
             </label>
             <label class="audit-mode-card">
               <input type="radio" name="audit-mode" value="MAXIMUM">
-              <span><b>최고 정밀 검수</b><small>OpenAI 분석 후 필요한 건만 Claude 재검증</small></span>
+              <span><b>최고 정밀 검수</b><small>모든 후보를 Claude로 재검증</small></span>
             </label>
           </div>
 
@@ -719,7 +719,7 @@ table.res-table-ins tr.ins-row:hover .ins-btn,
           </div>
           <div class="audit-note">
             전체 카톡 파일을 AI에 보내지 않습니다. 브라우저에서 주유·세차·식대·택시비 등 지출과 일반 대화를 먼저 제외한 뒤,
-            현재 저장 예약과 비교해 불확실한 예약 후보 묶음만 Firebase Function으로 전송합니다. AI 결과는 자동 저장되지 않으며 반드시 사용자가 확인 후 반영합니다.
+            현재 저장 예약과 비교해 불확실한 예약 후보 묶음만 Claude AI로 전송합니다. AI 결과는 자동 저장되지 않으며 반드시 사용자가 확인 후 반영합니다.
           </div>
 
           <div class="audit-progress" id="audit-progress">
@@ -755,6 +755,7 @@ table.res-table-ins tr.ins-row:hover .ins-btn,
             <input type="search" id="audit-search" placeholder="이름·전화번호·차량·주소 검색" oninput="auditRenderDebounced()">
             <label class="audit-ai-option"><input type="checkbox" id="audit-show-excluded" onchange="renderReservationAudit()"> 제외된 지출·일반대화 보기</label>
             <button class="btn btn-ghost btn-sm" onclick="auditSelectMissing()">누락 가능성만 보기</button>
+            <button class="btn btn-gold btn-sm" onclick="auditUploadAllMissing()">⬆ 누락 예약 전체 자동 등록</button>
           </div>
 
           <div class="audit-table-wrap">
@@ -820,8 +821,8 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 /* ===== AI 파서 공개 설정 (OpenAI 키는 절대 브라우저에 넣지 않음) ===== */
-const SUPABASE_URL='';          // 예: https://YOUR_PROJECT.supabase.co
-const SUPABASE_ANON_KEY='';     // Supabase anon key만 입력
+const SUPABASE_URL='https://zkthlrtwouqpdvtcpvtw.supabase.co';
+const SUPABASE_ANON_KEY='sb_publishable_RXQEa0ljdPLP-_YezabDGg_qbAOezp2';
 const AI_FUNCTION_NAME='parse-reservation';
 
 /* ===== PLATE_MAP (68대) ===== */
@@ -1635,7 +1636,7 @@ function applyParsedResult(r){
 }
 function showParseStatus(r,opt={}){
   const color=r.confidence==='HIGH'?'var(--ok)':r.confidence==='MEDIUM'?'var(--gold)':'var(--danger)';
-  const source=opt.aiUsed?'기존 파서 + OpenAI 보정':'기존 파서';
+  const source=opt.aiUsed?'기존 파서 + Claude 보정':'기존 파서';
   const warn=(r.warnings||[]).length?`<div style="margin-top:4px">확인 필요: ${r.warnings.map(esc).join(' · ')}</div>`:'';
   const err=opt.error?`<div style="margin-top:4px;color:var(--danger)">${esc(opt.error)}</div>`:'';
   const elapsed=opt.elapsed!=null?` · ${Math.round(opt.elapsed)}ms`:'';
@@ -1934,7 +1935,8 @@ function kakaoActionButtons(row,i){
   if(row.ignored)return '<span class="hint">무시됨</span>';const a=row.event?.action;
   if(!row.event)return '<button class="btn btn-ghost" onclick="ignoreKakaoRow('+i+')">확인</button>';
   const primary=a==='CREATE'?'신규 등록':a==='CANCEL'?'취소 처리':a==='PAYMENT_UPDATE'?'결제 반영':a==='VEHICLE_ASSIGNMENT'?'차량 반영':a==='LOCATION_UPDATE'?'장소 반영':a==='OPERATION_NOTE'?'메모 반영':a==='UPDATE'?'기존 예약 수정':'직접 확인';
-  return `<button class="btn btn-gold" onclick="applyKakaoRow(${i})">${primary}</button><button class="btn btn-ghost" onclick="directEditKakaoRow(${i})">직접 수정</button><button class="btn btn-ghost" onclick="ignoreKakaoRow(${i})">무시</button>`;
+  const uploadBtn=(a==='CREATE'||a==='NEEDS_REVIEW')?`<button class="btn btn-gold" onclick="uploadKakaoRow(${i})" title="폼 안 거치고 바로 예약 저장">⬆ 바로 올리기</button>`:'';
+  return `${uploadBtn}<button class="btn btn-ghost" onclick="applyKakaoRow(${i})">${a==='CREATE'||a==='NEEDS_REVIEW'?'폼에서 확인':primary}</button><button class="btn btn-ghost" onclick="directEditKakaoRow(${i})">직접 수정</button><button class="btn btn-ghost" onclick="ignoreKakaoRow(${i})">무시</button>`;
 }
 function renderKakaoAnalysis(messageCount=0,clusterCount=0){
   if(messageCount||clusterCount)kakaoAnalysisMeta={messageCount,clusterCount};else({messageCount,clusterCount}=kakaoAnalysisMeta);
@@ -1972,6 +1974,52 @@ function applyKakaoRow(i){
 }
 function directEditKakaoRow(i){const row=kakaoAnalysisState[i],e=row?.event;if(!e)return;if(e.action==='CREATE'||e.action==='NEEDS_REVIEW'){fillKakaoEventForm(e);return}const target=chooseKakaoMatch(e);if(!target){toast('수정할 기존 예약을 선택하세요');return}editRes(target.id);if(e.start)set('f-start',e.start);if(e.end)set('f-end',e.end);if(e.car||e.plate)set('f-car',kakaoCarField(e,target.car));if(e.pickup||e.returnLocation)applyLocationPairToForm(e.pickup||val('f-pickup'),e.returnLocation||'');document.getElementById('edit-hint').textContent='카톡 변경 내용 직접 확인 중';}
 function ignoreKakaoRow(i){if(!kakaoAnalysisState[i])return;kakaoAnalysisState[i].ignored=true;renderKakaoAnalysis();toast('이 분석 결과를 무시했습니다')}
+
+/* ===== 카톡 신규 예약을 폼 안 거치고 바로 Firestore에 저장 ===== */
+function kakaoEventToReservation(e){
+  const rec=normalizeReservationLocationRecord({
+    id:uid(),
+    name:kakaoDisplayName(e),
+    phone:e.phone||'',
+    car:kakaoCarField(e),
+    start:e.start||'',
+    end:e.end||'',
+    days:e.days||'',
+    ins:e.insurance||'',
+    status:'wait',
+    pickup:e.pickup||'사무실',
+    ret:e.returnLocation||e.pickup||'사무실',
+    balance:(e.balance!=null&&e.balance!=='')?String(e.balance):'',
+    memo:[e.memo,buildFinancialMemo({total:e.total,deposit:e.deposit,balance:e.balance,payment_method:e.paymentMethod})].filter(Boolean).join(' · ')
+  });
+  return rec;
+}
+function uploadKakaoRow(i){
+  const row=kakaoAnalysisState[i],e=row?.event;if(!e||row.ignored)return;
+  if(!(e.action==='CREATE'||e.action==='NEEDS_REVIEW')){toast('신규 예약만 바로 올릴 수 있습니다');return}
+  if(!e.name&&!e.customerName&&!e.sourceName){toast('고객명이 없어 올릴 수 없습니다 — 직접 수정하세요');return}
+  const rec=kakaoEventToReservation(e);
+  const dup=findKakaoConflict(rec);
+  const warn=dup?`\n\n⚠️ ${dup.name} (${fmtShort(dup.start)}) 예약과 차량·시간이 겹칩니다.`:'';
+  if(!confirm(`아래 예약을 바로 등록할까요?${warn}\n\n${rec.name} / ${rec.car} / ${fmtShort(rec.start)}~${fmtShort(rec.end)}`))return;
+  snapshot();data.unshift(rec);save();render();row.ignored=true;renderKakaoAnalysis();
+  toast('예약을 등록했습니다');
+}
+function findKakaoConflict(rec){
+  if(!rec.start||!rec.end)return null;const plate=(String(rec.car||'').match(/\((\d{4})\)/)||[])[1];if(!plate)return null;
+  const s=new Date(rec.start),en=new Date(rec.end);
+  return data.find(r=>{if(r.id===rec.id||r.status==='cancelled')return false;const p=(String(r.car||'').match(/\((\d{4})\)/)||[])[1];if(p!==plate||!r.start||!r.end)return false;const rs=new Date(r.start),re=new Date(r.end);return s<re&&rs<en})||null;
+}
+function uploadAllKakao(){
+  const targets=kakaoAnalysisState.filter(r=>r.event&&!r.ignored&&(r.event.action==='CREATE'||r.event.action==='NEEDS_REVIEW')&&(r.event.name||r.event.customerName||r.event.sourceName));
+  if(!targets.length){toast('바로 올릴 신규 예약이 없습니다');return}
+  const conflicts=targets.map(r=>{const rec=kakaoEventToReservation(r.event);return{r,rec,dup:findKakaoConflict(rec)}});
+  const dupCount=conflicts.filter(c=>c.dup).length;
+  const msg=`신규 예약 ${targets.length}건을 한 번에 등록할까요?`+(dupCount?`\n\n⚠️ 이 중 ${dupCount}건은 차량·시간이 겹칩니다.`:'');
+  if(!confirm(msg))return;
+  snapshot();let n=0;conflicts.forEach(c=>{data.unshift(c.rec);c.r.ignored=true;n++});save();render();renderKakaoAnalysis();
+  toast(`${n}건을 등록했습니다`);
+}
 
 
 /* ===== 카카오톡 예약 누락 검수 ===== */
@@ -3078,8 +3126,8 @@ async function runAllRegressionSelfTests(){
 }
 
 
-/* ===== AI 예약 누락 검수 고도화: OpenAI + Claude 교차검증 ===== */
-const AUDIT_API_ENDPOINT='/api/audit-reservations';
+/* ===== AI 예약 누락 검수: Claude 정밀 분석 ===== */
+const AUDIT_API_ENDPOINT=(SUPABASE_URL&&SUPABASE_ANON_KEY)?`${SUPABASE_URL.replace(/\/$/,'')}/functions/v1/audit-reservations`:'/api/audit-reservations';
 const AUDIT_CACHE_STORAGE='ky_audit_ai_cache_v1';
 const AUDIT_VERDICT_LABELS={
   MATCHED:'등록 확인',LIKELY_MISSING:'누락 가능성 높음',POSSIBLE_MISSING:'누락 가능성 있음',
@@ -3125,7 +3173,9 @@ function auditNeedsAI(row){
 async function auditRequestBatch(items,mode){
   const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),115000);
   try{
-    const response=await fetch(AUDIT_API_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode,timezone:'Asia/Seoul',items}),signal:ctl.signal});
+    const auditHeaders={'Content-Type':'application/json'};
+    if(SUPABASE_URL&&SUPABASE_ANON_KEY){auditHeaders.Authorization=`Bearer ${SUPABASE_ANON_KEY}`;auditHeaders.apikey=SUPABASE_ANON_KEY}
+    const response=await fetch(AUDIT_API_ENDPOINT,{method:'POST',headers:auditHeaders,body:JSON.stringify({mode,timezone:'Asia/Seoul',items}),signal:ctl.signal});
     const json=await response.json().catch(()=>null);if(!response.ok||!json?.success)throw new Error(json?.error?.code||`HTTP_${response.status}`);return json.data?.items||[];
   }finally{clearTimeout(timer)}
 }
@@ -3145,7 +3195,7 @@ async function auditApplyAI(rows,mode,force=false){
   let completed=0,aiCount=0,claudeCount=0;
   const apply=(x,result)=>{const row=x.row;row.localEvent=row.localEvent||JSON.parse(JSON.stringify(row.event||{}));row.openaiResult=result.openaiResult||null;row.claudeResult=result.claudeResult||null;row.finalResult=result.finalResult||null;row.aiErrors=result.errors||{};if(row.finalResult){row.event=auditMergeReservation(row.event,row.finalResult);row.finalVerdict=row.finalResult.verdict;row.finalConfidence=row.finalResult.confidence}else{row.finalVerdict=auditLocalVerdict(row);row.finalConfidence=0}if(row.openaiResult)aiCount++;if(row.claudeResult)claudeCount++};
   cached.forEach(x=>{apply(x,x.result);completed++});
-  for(let i=0;i<pending.length;i+=6){const batch=pending.slice(i,i+6);auditSetProgress(3,5,mode==='MAXIMUM'?'OpenAI 분석 및 Claude 교차검증':'OpenAI 정밀 분석',`${completed}/${selected.length}개 AI 검수 완료`);const results=await auditRequestBatch(batch.map(x=>x.item),mode);const map=new Map(results.map(r=>[r.clientId,r]));for(const x of batch){const result=map.get(x.item.clientId)||{errors:{openai:'NO_RESULT'}};apply(x,result);cache[x.key]=result;completed++}auditWriteCache(cache)}
+  for(let i=0;i<pending.length;i+=6){const batch=pending.slice(i,i+6);auditSetProgress(3,5,'Claude AI 정밀 분석',`${completed}/${selected.length}개 AI 검수 완료`);const results=await auditRequestBatch(batch.map(x=>x.item),mode);const map=new Map(results.map(r=>[r.clientId,r]));for(const x of batch){const result=map.get(x.item.clientId)||{errors:{claude:'NO_RESULT'}};apply(x,result);cache[x.key]=result;completed++}auditWriteCache(cache)}
   return{aiCount,claudeCount,cacheCount:cached.length};
 }
 function auditFinalizeRows(rows){return rows.map(row=>{if(!row.localEvent)row.localEvent=JSON.parse(JSON.stringify(row.event||{}));if(!row.finalVerdict)row.finalVerdict=auditLocalVerdict(row);if(row.finalConfidence==null)row.finalConfidence=row.event?.confidence==='HIGH'?.88:row.event?.confidence==='MEDIUM'?.68:.45;return row})}
@@ -3170,8 +3220,8 @@ async function runReservationAudit(force=false){
     auditSetProgress(5,5,'5단계 · 최종 결과 정리','AI 결과와 로컬 결과를 합의 규칙으로 정리합니다.');
     rows=auditFinalizeRows(rows);reservationAuditState={rows,excludedRows:excluded,raw,fileName:file.name,messageCount:messages.length,clusterCount:clusters.length,expenseCount:excluded.filter(x=>x.finalVerdict==='EXPENSE').length,noiseCount:excluded.filter(x=>x.finalVerdict==='GENERAL_CHAT').length,aiCount:aiMeta.aiCount,claudeCount:aiMeta.claudeCount,cacheCount:aiMeta.cacheCount,fromDate,toDate,mode};renderReservationAudit();
     const missing=rows.filter(r=>['LIKELY_MISSING','POSSIBLE_MISSING'].includes(r.finalVerdict)).length;document.getElementById('nav-audit').textContent=missing;
-    auditSetProgress(5,5,'검수 완료',`메시지 ${messages.length}개 · 예약 후보 ${rows.length}개 · OpenAI ${aiMeta.aiCount}건 · Claude ${aiMeta.claudeCount}건 · 캐시 ${aiMeta.cacheCount}건`);toast(missing?`누락 가능성 예약 ${missing}건을 확인해 주세요`:'명확한 누락 가능성 예약이 없습니다');
-  }catch(error){console.error(error);auditSetProgress(5,5,'검수 실패','카카오톡 TXT 형식과 Firebase Function 배포 상태를 확인하세요.');toast('누락 검수에 실패했습니다')}finally{btn.disabled=false;rerun.disabled=false}
+    auditSetProgress(5,5,'검수 완료',`메시지 ${messages.length}개 · 예약 후보 ${rows.length}개 · Claude ${aiMeta.claudeCount}건 · 캐시 ${aiMeta.cacheCount}건`);toast(missing?`누락 가능성 예약 ${missing}건을 확인해 주세요`:'명확한 누락 가능성 예약이 없습니다');
+  }catch(error){console.error(error);auditSetProgress(5,5,'검수 실패','카카오톡 TXT 형식과 Claude AI 함수 배포 상태를 확인하세요.');toast('누락 검수에 실패했습니다')}finally{btn.disabled=false;rerun.disabled=false}
 }
 function auditStatusLabel(s){return AUDIT_VERDICT_LABELS[s]||s||'직접 확인 필요'}
 function auditBadgeClass(v){return String(v||'NEEDS_REVIEW').toLowerCase()}
@@ -3185,13 +3235,48 @@ function renderReservationAudit(){
   document.getElementById('audit-ok-count').textContent=counts('MATCHED');document.getElementById('audit-missing-count').textContent=counts('LIKELY_MISSING')+counts('POSSIBLE_MISSING');document.getElementById('audit-related-count').textContent=base.filter(r=>AUDIT_RELATED_VERDICTS.has(r.finalVerdict)).length;document.getElementById('audit-check-count').textContent=counts('NEEDS_REVIEW')+counts('AI_DISAGREEMENT')+counts('INSUFFICIENT_INFORMATION');
   const out=document.getElementById('audit-results');if(!rows.length){out.className='audit-empty';out.innerHTML='검수 결과가 없습니다.';return}
   const body=visible.map(r=>{const e=r.event||{},m=r.finalResult?.matchedReservationId?data.find(x=>x.id===r.finalResult.matchedReservationId):r.match?.top?data.find(x=>x.id===r.match.top.reservationId):null,realIndex=base.indexOf(r),customer=[e.sourceName?e.sourceName+' 고객':'',e.customerName].filter(Boolean).join(' ')||'(미기재)',verdict=r.finalVerdict||'NEEDS_REVIEW',source=auditFullSource(r),reasons=r.finalResult?.reasons||r.openaiResult?.reasons||[],warnings=[...(e.warnings||[]),...(r.finalResult?.warnings||[])];
-    const actions=r.excluded?'<button class="btn btn-ghost" disabled>제외됨</button>':['LIKELY_MISSING','POSSIBLE_MISSING'].includes(verdict)?`<button class="btn btn-gold" onclick="auditFillReservation(${realIndex})">예약 폼에 입력</button><button class="btn btn-ghost" onclick="auditIgnoreRow(${realIndex})">무시</button>`:m?`<button class="btn btn-gold" onclick="auditOpenMatched(${realIndex})">기존 예약 열기</button><button class="btn btn-ghost" onclick="auditFillReservation(${realIndex})">내용 비교</button><button class="btn btn-ghost" onclick="auditIgnoreRow(${realIndex})">검수 완료</button>`:`<button class="btn btn-gold" onclick="auditFillReservation(${realIndex})">직접 확인</button><button class="btn btn-ghost" onclick="auditIgnoreRow(${realIndex})">무시</button>`;
+    const actions=r.excluded?'<button class="btn btn-ghost" disabled>제외됨</button>':['LIKELY_MISSING','POSSIBLE_MISSING'].includes(verdict)?`<button class="btn btn-gold" onclick="auditUploadRow(${realIndex})" title="폼 안 거치고 바로 예약 저장">⬆ 바로 등록</button><button class="btn btn-ghost" onclick="auditFillReservation(${realIndex})">폼에서 확인</button><button class="btn btn-ghost" onclick="auditIgnoreRow(${realIndex})">무시</button>`:m?`<button class="btn btn-gold" onclick="auditOpenMatched(${realIndex})">기존 예약 열기</button><button class="btn btn-ghost" onclick="auditFillReservation(${realIndex})">내용 비교</button><button class="btn btn-ghost" onclick="auditIgnoreRow(${realIndex})">검수 완료</button>`:`<button class="btn btn-gold" onclick="auditFillReservation(${realIndex})">직접 확인</button><button class="btn btn-ghost" onclick="auditIgnoreRow(${realIndex})">무시</button>`;
     const matched=m?`${esc(m.name||'-')}<br><small>${esc(fmtShort(m.start))} · ${esc(m.car||'-')}</small>`:'-';
-    return`<tr><td><span class="audit-badge ${auditBadgeClass(verdict)}">${esc(auditStatusLabel(verdict))}</span><br>${auditConfidenceHtml(r.finalConfidence)}</td><td>${esc(r.cluster?.messages?.[0]?.chatDate||'-')}<br><small>${esc(r.cluster?.messages?.[0]?.sender||'')}</small></td><td>${esc(fmtShort(e.start))}<br>~ ${esc(fmtShort(e.end))}</td><td><b>${esc(customer)}</b><br><small>${esc(e.phone||'-')}</small></td><td>${esc([e.car,e.plate].filter(Boolean).join(' / ')||'-')}</td><td>${esc(e.pickup||'-')}<br><small>반차 ${esc(e.returnLocation||e.pickup||'-')}</small></td><td>${matched}</td><td class="audit-ai-cell">${esc(auditProviderText(r.openaiResult))}<small>${esc((r.openaiResult?.reasons||[]).slice(0,2).join(' · '))}</small></td><td class="audit-ai-cell">${esc(auditProviderText(r.claudeResult))}<small>${esc((r.claudeResult?.reasons||[]).slice(0,2).join(' · '))}</small></td><td><details><summary>근거·원문·AI 상세</summary><div class="audit-source">${esc(source)}</div><div class="audit-detail-grid">${auditJsonBox('로컬 분석',r.localEvent)}${auditJsonBox('OpenAI',r.openaiResult)}${auditJsonBox('Claude / 최종', {claude:r.claudeResult,final:r.finalResult,errors:r.aiErrors})}</div></details>${reasons.length?`<div class="hint">${esc(reasons.join(' · '))}</div>`:''}${warnings.length?`<div class="kakao-warnings">${esc([...new Set(warnings)].join(' · '))}</div>`:''}</td><td><div class="audit-actions">${actions}</div></td></tr>`}).join('');
-  out.className='';out.innerHTML=`<table class="audit-table"><thead><tr><th>최종 판정</th><th>카톡 작성</th><th>예약 일정</th><th>고객</th><th>차량</th><th>배차/반차</th><th>기존 예약 후보</th><th>OpenAI</th><th>Claude</th><th>판정 근거</th><th>처리</th></tr></thead><tbody>${body||'<tr><td colspan="11" class="audit-empty">조건에 맞는 결과가 없습니다.</td></tr>'}</tbody></table>`;
+    return`<tr><td><span class="audit-badge ${auditBadgeClass(verdict)}">${esc(auditStatusLabel(verdict))}</span><br>${auditConfidenceHtml(r.finalConfidence)}</td><td>${esc(r.cluster?.messages?.[0]?.chatDate||'-')}<br><small>${esc(r.cluster?.messages?.[0]?.sender||'')}</small></td><td>${esc(fmtShort(e.start))}<br>~ ${esc(fmtShort(e.end))}</td><td><b>${esc(customer)}</b><br><small>${esc(e.phone||'-')}</small></td><td>${esc([e.car,e.plate].filter(Boolean).join(' / ')||'-')}</td><td>${esc(e.pickup||'-')}<br><small>반차 ${esc(e.returnLocation||e.pickup||'-')}</small></td><td>${matched}</td><td class="audit-ai-cell">${esc(auditProviderText(r.claudeResult))}<small>${esc((r.claudeResult?.reasons||[]).slice(0,2).join(' · '))}</small></td><td><details><summary>근거·원문·AI 상세</summary><div class="audit-source">${esc(source)}</div><div class="audit-detail-grid">${auditJsonBox('로컬 분석',r.localEvent)}${auditJsonBox('Claude / 최종', {claude:r.claudeResult,final:r.finalResult,errors:r.aiErrors})}</div></details>${reasons.length?`<div class="hint">${esc(reasons.join(' · '))}</div>`:''}${warnings.length?`<div class="kakao-warnings">${esc([...new Set(warnings)].join(' · '))}</div>`:''}</td><td><div class="audit-actions">${actions}</div></td></tr>`}).join('');
+  out.className='';out.innerHTML=`<table class="audit-table"><thead><tr><th>최종 판정</th><th>카톡 작성</th><th>예약 일정</th><th>고객</th><th>차량</th><th>배차/반차</th><th>기존 예약 후보</th><th>Claude 판정</th><th>판정 근거</th><th>처리</th></tr></thead><tbody>${body||'<tr><td colspan="10" class="audit-empty">조건에 맞는 결과가 없습니다.</td></tr>'}</tbody></table>`;
 }
 function auditSelectMissing(){document.getElementById('audit-filter').value='LIKELY_MISSING';renderReservationAudit()}
 function auditFillReservation(i){const row=reservationAuditState.rows[i];if(!row?.event)return;fillKakaoEventForm(row.event);go2('dashboard');window.scrollTo({top:0,behavior:'smooth'});document.getElementById('edit-hint').textContent=`AI 누락 검수 후보 · ${row.cluster?.messages?.[0]?.chatDate||''} 카톡`;toast('예약 폼에 입력했습니다. 확인 후 저장하세요')}
+
+/* ===== 검수 이벤트 → 예약 레코드 (바로 등록용) ===== */
+function auditEventToReservation(e){
+  const name=[e.sourceName?e.sourceName+' 고객':'',e.customerName].filter(Boolean).join(' ')||e.name||'';
+  const plate=resolvePlate(e.plate)||e.plate||'';
+  const car=[e.car||'',plate?`(${plate})`:''].filter(Boolean).join(' ');
+  return normalizeReservationLocationRecord({
+    id:uid(),name,phone:e.phone||'',car,start:e.start||'',end:e.end||'',days:e.days||'',
+    ins:e.insurance||'',status:'wait',pickup:e.pickup||'사무실',ret:e.returnLocation||e.pickup||'사무실',
+    balance:(e.balance!=null&&e.balance!=='')?String(e.balance):'',
+    memo:[e.memo,buildFinancialMemo({total:e.total,deposit:e.deposit,balance:e.balance,payment_method:e.paymentMethod})].filter(Boolean).join(' · ')
+  });
+}
+function auditUploadRow(i){
+  const row=reservationAuditState.rows[i],e=row?.event;if(!e){toast('등록할 예약 정보가 없습니다');return}
+  if(!e.customerName&&!e.sourceName&&!e.name){toast('고객명이 없어 등록할 수 없습니다 — 직접 확인하세요');return}
+  const rec=auditEventToReservation(e);
+  const dup=findKakaoConflict(rec);
+  const warn=dup?`\n\n⚠️ ${dup.name} (${fmtShort(dup.start)}) 예약과 차량·시간이 겹칩니다.`:'';
+  if(!confirm(`누락 예약을 바로 등록할까요?${warn}\n\n${rec.name} / ${rec.car} / ${fmtShort(rec.start)}~${fmtShort(rec.end)}`))return;
+  snapshot();data.unshift(rec);save();render();row.ignored=true;renderReservationAudit();
+  const miss=reservationAuditState.rows.filter(r=>!r.ignored&&['LIKELY_MISSING','POSSIBLE_MISSING'].includes(r.finalVerdict)).length;document.getElementById('nav-audit').textContent=miss;
+  toast('예약을 등록했습니다');
+}
+function auditUploadAllMissing(){
+  const targets=reservationAuditState.rows.filter(r=>!r.ignored&&['LIKELY_MISSING','POSSIBLE_MISSING'].includes(r.finalVerdict)&&r.event&&(r.event.customerName||r.event.sourceName||r.event.name));
+  if(!targets.length){toast('자동 등록할 누락 예약이 없습니다');return}
+  const items=targets.map(r=>({r,rec:auditEventToReservation(r.event)}));
+  const dupCount=items.filter(x=>findKakaoConflict(x.rec)).length;
+  const msg=`누락 가능성 예약 ${targets.length}건을 한 번에 등록할까요?`+(dupCount?`\n\n⚠️ 이 중 ${dupCount}건은 차량·시간이 겹칩니다.`:'');
+  if(!confirm(msg))return;
+  snapshot();let n=0;items.forEach(x=>{data.unshift(x.rec);x.r.ignored=true;n++});save();render();renderReservationAudit();
+  document.getElementById('nav-audit').textContent='0';
+  toast(`${n}건을 등록했습니다`);
+}
 function auditOpenMatched(i){const row=reservationAuditState.rows[i],id=row?.finalResult?.matchedReservationId||row?.match?.top?.reservationId;if(!id)return;editRes(id);go2('dashboard');window.scrollTo({top:0,behavior:'smooth'});toast('일치하는 저장 예약을 열었습니다')}
 function auditIgnoreRow(i){if(!reservationAuditState.rows[i])return;reservationAuditState.rows[i].ignored=true;renderReservationAudit();const miss=reservationAuditState.rows.filter(r=>!r.ignored&&['LIKELY_MISSING','POSSIBLE_MISSING'].includes(r.finalVerdict)).length;document.getElementById('nav-audit').textContent=miss}
 function clearReservationAudit(){reservationAuditState={rows:[],excludedRows:[],raw:'',fileName:'',messageCount:0,clusterCount:0,expenseCount:0,noiseCount:0,aiCount:0,claudeCount:0};const f=document.getElementById('audit-file');if(f)f.value='';document.getElementById('audit-file-name').textContent='파일을 선택해 주세요';document.getElementById('audit-progress').classList.remove('on');document.getElementById('audit-results').className='audit-empty';document.getElementById('audit-results').textContent='카카오톡 TXT 파일을 선택한 후 ‘검수 시작’을 누르세요.';document.getElementById('nav-audit').textContent='0';renderReservationAudit()}
