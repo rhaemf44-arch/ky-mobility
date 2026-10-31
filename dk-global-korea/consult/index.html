@@ -1,0 +1,588 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- 시안 단계라 검색 노출을 막아 둡니다. 실제 공개할 때 이 줄을 삭제하세요. -->
+<meta name="robots" content="noindex,nofollow">
+<title>빠른 상담 요청 · DK글로벌 코리아</title>
+<meta name="theme-color" content="#111210">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ------------------------------------------------------------------
+   Keylight 분할 레이아웃 + DK글로벌 코리아 A안(검정·골드)
+   모든 길이는 1470 × 900 기준 디자인 픽셀 × --u 로 계산합니다.
+   ------------------------------------------------------------------ */
+:root{
+  --u:1px;
+  --sans:"Noto Sans KR",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Malgun Gothic",sans-serif;
+  --serif:"Noto Serif KR",Batang,Georgia,serif;
+
+  --ink:#111210;          /* 제목, 버튼 */
+  --muted:#5b5a54;        /* 라벨, 보조 문구 */
+  --icon:#6a685f;
+  --line:#e4e0d6;
+  --paper:#faf8f3;        /* 오른쪽 패널: 따뜻한 아이보리 */
+  --on-ink:#f6f2ea;
+  --gold:#b8a381;
+  --gold-deep:#8a7451;
+  --gold-light:#d6c7ad;
+
+  --hero-title:#f3f0e9;
+  --hero-copy:rgba(243,240,233,.62);
+  --hero-faint:rgba(243,240,233,.5);
+  --hero-rule:rgba(214,199,173,.28);
+  --logo-ink:rgba(214,199,173,.62);
+
+  --glass-bg:rgba(14,13,10,.46);
+  --glass-border:rgba(214,199,173,.16);
+  --glass-filter:blur(16px) saturate(.8);
+  --shadow-xs:0 1px 2px 0 rgba(0,0,0,.05);
+
+  /* A안 첫 장면 정지 이미지. 파일이 없으면 어두운 배경만 보입니다. */
+  --brand-img:url(../concept-a-v2/assets/arrival.webp);
+}
+@media (min-width:740px){
+  :root{
+    --u-floor:min(clamp(.8px, calc(.8px + (1176px - 100vw) / 1180), 1px), max(.8px, calc(100vh / 772), calc(500px - 100vh)));
+    --u:min(4px, max(var(--u-floor), min(calc(100vw / 1470), calc(100vh / 900))));
+  }
+  @supports (height:100dvh){
+    :root{
+      --u-floor:min(clamp(.8px, calc(.8px + (1176px - 100vw) / 1180), 1px), max(.8px, calc(100dvh / 772), calc(500px - 100dvh)));
+      --u:min(4px, max(var(--u-floor), min(calc(100vw / 1470), calc(100dvh / 900))));
+    }
+  }
+}
+@media (min-width:740px) and (orientation:portrait){
+  :root{ --u-floor:min(1px, calc(100vh / 772)); }
+  @supports (height:100dvh){ :root{ --u-floor:min(1px, calc(100dvh / 772)); } }
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{font-family:var(--sans);background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased;word-break:keep-all;overflow-wrap:break-word}
+button,input,select{font:inherit;color:inherit}
+a{color:inherit;text-decoration:none}
+[hidden]{display:none!important}
+
+/* ============================ Shell ============================ */
+.shell{display:flex;min-height:100vh;min-height:100dvh;width:100%}
+
+/* ---------------- 브랜드 패널 (왼쪽) ---------------- */
+.brand{
+  position:relative;
+  flex:0 0 calc(100% * 610 / 1470);
+  max-width:calc(100% - 450 * var(--u));
+  min-height:100vh;min-height:100dvh;
+  display:flex;flex-direction:column;justify-content:space-between;gap:calc(24 * var(--u));
+  container-type:inline-size;
+  padding:calc(32 * var(--u)) 0;
+  overflow:hidden;isolation:isolate;color:#fff;
+  background:
+    linear-gradient(90deg,rgba(10,10,9,.86) 0%,rgba(10,10,9,.55) 55%,rgba(10,10,9,.2) 100%),
+    linear-gradient(180deg,rgba(10,10,9,.2) 0%,transparent 40%,rgba(10,10,9,.75) 100%),
+    var(--brand-img) 64% center / cover no-repeat,
+    radial-gradient(ellipse at 72% 62%,#3a3324 0%,#171713 50%,#0d0e0c 100%);
+}
+/* 호텔 입구의 따뜻한 조명이 숨 쉬듯 번지고, 아래로 저녁 공기가 천천히 흐릅니다. */
+.brand::before,.brand::after{content:"";position:absolute;pointer-events:none;z-index:-1}
+.brand::before{
+  left:52%;top:30%;width:62%;height:42%;
+  background:radial-gradient(closest-side,rgba(232,190,120,.42),rgba(184,140,80,.14) 55%,transparent);
+  mix-blend-mode:screen;filter:blur(calc(6 * var(--u)));
+  animation:bloom 5.5s cubic-bezier(.45,0,.55,1) infinite alternate;
+}
+.brand::after{
+  left:-10%;top:52%;width:120%;height:46%;
+  background:radial-gradient(closest-side,rgba(90,110,160,.22),transparent);
+  mix-blend-mode:screen;
+  animation:drift 9s cubic-bezier(.45,0,.55,1) infinite alternate;
+}
+@keyframes bloom{from{opacity:.35;transform:scale(.9)}to{opacity:1;transform:scale(1.12)}}
+@keyframes drift{from{opacity:.45;transform:translate3d(-6%,2%,0)}to{opacity:1;transform:translate3d(6%,-3%,0)}}
+
+.brand__inset{
+  --inset:clamp(calc(24 * var(--u)), calc(100cqi - 465.75 * var(--u)), calc(144 * var(--u)));
+  --measure:min(calc(338 * var(--u)), calc(100cqi - var(--inset) - 24 * var(--u)));
+  padding-left:var(--inset);padding-right:calc(24 * var(--u));
+}
+
+.logo{display:inline-flex;align-items:center;height:calc(40 * var(--u));gap:calc(12 * var(--u))}
+.logo__mark{
+  width:calc(40 * var(--u));height:calc(40 * var(--u));flex:none;
+  border:calc(1 * var(--u)) solid var(--gold);display:grid;place-items:center;
+  font-family:Georgia,serif;font-size:calc(15 * var(--u));letter-spacing:.04em;color:var(--gold-light);
+}
+.logo__word{display:flex;flex-direction:column;font-family:var(--serif);font-size:calc(20 * var(--u));line-height:1.1;letter-spacing:-.03em;color:#fff}
+.logo__word small{font-family:var(--sans);font-size:calc(10 * var(--u));letter-spacing:.16em;color:var(--hero-faint);margin-top:calc(4 * var(--u))}
+
+.eyebrow{display:block;margin-bottom:calc(14 * var(--u));font-size:calc(12 * var(--u));letter-spacing:.16em;color:var(--gold-light);font-weight:500}
+.hero__title{
+  margin:0;max-width:var(--measure);
+  font-family:var(--serif);font-weight:400;
+  font-size:min(calc(32 * var(--u)), calc(var(--measure) / 7.4));
+  line-height:1.45;letter-spacing:-.045em;color:var(--hero-title);
+}
+.hero__copy{margin:calc(14 * var(--u)) 0 0;max-width:var(--measure);font-size:calc(16 * var(--u));line-height:calc(26 * var(--u));color:var(--hero-copy)}
+
+/* 서비스 카드 마퀴 (후기 대신 실제 서비스 항목만 사용) */
+.reel{position:relative;margin-top:calc(40 * var(--u));height:calc(250 * var(--u))}
+.reel__track{
+  position:absolute;left:0;top:0;display:flex;gap:calc(16 * var(--u));
+  transform:translateX(calc(-43 * var(--u)));
+  animation:reel 60s linear infinite;will-change:transform;
+}
+@media (hover:hover){.reel:hover .reel__track{animation-play-state:paused}}
+/* 서비스 5개 × (250 + 16) = 1330 */
+@keyframes reel{from{transform:translateX(calc(-43 * var(--u)))}to{transform:translateX(calc((-43 - 1330) * var(--u)))}}
+.card{
+  flex:none;width:calc(250 * var(--u));height:calc(250 * var(--u));margin:0;
+  display:flex;flex-direction:column;justify-content:space-between;
+  padding:calc(24 * var(--u));
+  border:calc(1 * var(--u)) solid var(--glass-border);
+  background:var(--glass-bg);-webkit-backdrop-filter:var(--glass-filter);backdrop-filter:var(--glass-filter);
+}
+.card__no{font-family:Georgia,serif;font-size:calc(13 * var(--u));color:var(--gold)}
+.card__title{margin:calc(10 * var(--u)) 0 0;font-size:calc(17 * var(--u));line-height:calc(25 * var(--u));font-weight:500;color:rgba(255,255,255,.94)}
+.card__text{margin:calc(8 * var(--u)) 0 0;font-size:calc(14 * var(--u));line-height:calc(22 * var(--u));color:rgba(255,255,255,.66)}
+.card__foot{display:flex;align-items:center;justify-content:space-between;gap:calc(12 * var(--u));font-size:calc(12 * var(--u));color:rgba(214,199,173,.75);letter-spacing:.04em}
+.card__badge{width:calc(32 * var(--u));height:calc(32 * var(--u));border:calc(1 * var(--u)) solid rgba(214,199,173,.35);display:grid;place-items:center;color:var(--gold-light)}
+.card__badge svg{width:calc(16 * var(--u));height:calc(16 * var(--u))}
+
+/* 이동 거점 */
+.trust{margin-top:calc(36 * var(--u));container-type:inline-size}
+.trust__rule{display:flex;align-items:center;gap:calc(8 * var(--u));max-width:var(--measure)}
+.trust__rule::before,.trust__rule::after{content:"";flex:1;height:calc(1 * var(--u));background:var(--hero-rule)}
+.trust__label{font-size:calc(14 * var(--u));line-height:calc(20 * var(--u));color:rgba(255,255,255,.88);white-space:nowrap}
+.marks{max-width:var(--measure);margin-top:calc(22 * var(--u));display:flex;flex-direction:column;gap:calc(18 * var(--u))}
+.marks__row{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:calc(14 * var(--u)) calc(22 * var(--u));min-height:calc(20 * var(--u))}
+.mark{display:inline-flex;align-items:center;gap:calc(6 * var(--u));color:var(--logo-ink);font-size:calc(15 * var(--u));line-height:1;font-weight:500;white-space:nowrap}
+.mark svg{width:calc(16 * var(--u));height:calc(16 * var(--u));flex:none}
+@container (max-width:333.5px){
+  .marks{display:grid;grid-template-columns:repeat(3,auto);justify-content:center;justify-items:center;gap:calc(14 * var(--u)) calc(12 * var(--u))}
+  .marks__row{display:contents}
+}
+.legal{margin:0;font-size:calc(13 * var(--u));line-height:calc(20 * var(--u));color:var(--hero-faint)}
+
+/* ---------------- 상담 패널 (오른쪽) ---------------- */
+.auth{flex:1 1 auto;min-width:0;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;background:var(--paper)}
+.auth__top{display:flex;justify-content:flex-end;padding:calc(28 * var(--u)) calc(40 * var(--u)) 0}
+.back{font-size:calc(14 * var(--u));color:var(--muted);display:inline-flex;gap:calc(8 * var(--u));align-items:center}
+@media (hover:hover){.back:hover{color:var(--ink)}}
+.auth__main{flex:1;display:flex;align-items:center;justify-content:center;padding:calc(12 * var(--u)) calc(24 * var(--u)) 0}
+.panel{width:calc(412 * var(--u));max-width:100%}
+
+.panel__title{margin:0;font-family:var(--serif);font-size:calc(32 * var(--u));line-height:calc(44 * var(--u));font-weight:500;letter-spacing:-.04em;color:var(--ink)}
+.panel__sub{margin:calc(4 * var(--u)) 0 0;font-size:calc(16 * var(--u));line-height:calc(24 * var(--u));color:var(--muted)}
+
+/* 가장 빠른 방법(전화)을 맨 위에 */
+.passkey-slot{margin-top:calc(24 * var(--u));height:calc(50 * var(--u));padding:calc(1 * var(--u))}
+.passkey{
+  display:flex;align-items:center;gap:calc(12 * var(--u));width:100%;height:100%;
+  padding:0 calc(12 * var(--u)) 0 calc(18 * var(--u));
+  border:0;background:var(--ink);color:var(--on-ink);
+  font-size:calc(16 * var(--u));line-height:calc(20 * var(--u));font-weight:500;cursor:pointer;text-align:left;
+  transition:background-color .15s ease;
+}
+@media (hover:hover){.passkey:hover{background:#26271f}}
+.passkey:focus-visible{outline:calc(2 * var(--u)) solid var(--gold);outline-offset:calc(2 * var(--u))}
+.passkey__icon{width:calc(20 * var(--u));height:calc(20 * var(--u));flex:none;color:var(--gold-light)}
+.passkey__label{flex:1}
+.pill{flex:none;padding:calc(3 * var(--u)) calc(9 * var(--u));background:var(--gold);color:#16150f;font-size:calc(12 * var(--u));line-height:calc(16 * var(--u));font-weight:600}
+.or.or--top{margin-top:calc(20 * var(--u))}
+
+.form{margin-top:calc(18 * var(--u))}
+.field + .field{margin-top:calc(14 * var(--u))}
+.label{display:block;font-size:calc(14 * var(--u));line-height:calc(20 * var(--u));color:var(--muted)}
+.label em{font-style:normal;color:var(--gold-deep);margin-left:calc(3 * var(--u))}
+.control{position:relative;margin-top:calc(7 * var(--u))}
+.control__icon{position:absolute;left:calc(11 * var(--u));top:50%;transform:translateY(-50%);width:calc(16 * var(--u));height:calc(16 * var(--u));color:var(--icon);pointer-events:none}
+.input{
+  display:block;width:100%;height:calc(42 * var(--u));
+  padding:0 calc(14 * var(--u)) 0 calc(36 * var(--u));
+  font-size:calc(15 * var(--u));line-height:calc(20 * var(--u));color:var(--ink);
+  background:#fff;border:calc(1 * var(--u)) solid var(--line);border-radius:0;
+  box-shadow:var(--shadow-xs);outline:none;appearance:none;-webkit-appearance:none;
+  transition:border-color .15s ease, box-shadow .15s ease;
+}
+select.input{background-image:linear-gradient(45deg,transparent 50%,var(--icon) 50%),linear-gradient(135deg,var(--icon) 50%,transparent 50%);background-position:calc(100% - 18 * var(--u)) 50%,calc(100% - 13 * var(--u)) 50%;background-size:calc(5 * var(--u)) calc(5 * var(--u));background-repeat:no-repeat}
+.input::placeholder{color:#8f8d85;opacity:1}
+.input:focus-visible{border-color:var(--gold);box-shadow:var(--shadow-xs),0 0 0 calc(3 * var(--u)) rgba(184,163,129,.28)}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:calc(12 * var(--u));margin-top:calc(14 * var(--u))}
+.pair .field + .field{margin-top:0}
+
+.row{margin-top:calc(16 * var(--u));display:flex;align-items:center;justify-content:space-between;gap:calc(12 * var(--u));min-height:calc(20 * var(--u))}
+.check{display:inline-flex;align-items:center;gap:calc(10 * var(--u));cursor:pointer;font-size:calc(14 * var(--u));line-height:calc(20 * var(--u));color:var(--ink)}
+.check input{position:absolute;opacity:0;width:1px;height:1px}
+.check__box{width:calc(16 * var(--u));height:calc(16 * var(--u));flex:none;border:calc(1 * var(--u)) solid #cfc9bb;background:#fff;display:grid;place-items:center;color:var(--on-ink)}
+.check__box svg{width:calc(11 * var(--u));height:calc(11 * var(--u));opacity:0}
+.check input:checked + .check__box{background:var(--ink);border-color:var(--ink)}
+.check input:checked + .check__box svg{opacity:1}
+.check input:focus-visible + .check__box{box-shadow:0 0 0 calc(3 * var(--u)) rgba(184,163,129,.45)}
+.link-strong{font-size:calc(14 * var(--u));line-height:calc(20 * var(--u));font-weight:500;color:var(--gold-deep);white-space:nowrap}
+@media (hover:hover){.link-strong:hover{text-decoration:underline;text-underline-offset:calc(3 * var(--u))}}
+
+.cta-slot{margin-top:calc(20 * var(--u));height:calc(46 * var(--u));padding:calc(1 * var(--u))}
+.cta{display:flex;align-items:center;justify-content:center;gap:calc(10 * var(--u));width:100%;height:100%;border:0;background:var(--gold);color:#16150f;font-size:calc(15 * var(--u));font-weight:600;cursor:pointer;transition:background-color .15s ease}
+@media (hover:hover){.cta:hover{background:var(--gold-light)}}
+.cta:focus-visible{outline:calc(2 * var(--u)) solid var(--ink);outline-offset:calc(2 * var(--u))}
+.demo{margin:calc(8 * var(--u)) 0 0;font-size:calc(12 * var(--u));line-height:calc(18 * var(--u));color:#8a877e;text-align:center}
+.status{margin:calc(10 * var(--u)) 0 0;padding:calc(12 * var(--u)) calc(14 * var(--u));border:calc(1 * var(--u)) solid var(--gold);background:#f3eee2;font-size:calc(13 * var(--u));line-height:calc(20 * var(--u));color:#4b4231}
+
+.or{margin-top:calc(22 * var(--u));display:flex;align-items:center;gap:calc(16 * var(--u));height:calc(20 * var(--u))}
+.or::before,.or::after{content:"";flex:1;height:calc(1 * var(--u));background:var(--line)}
+.or span{font-size:calc(14 * var(--u));line-height:calc(20 * var(--u));color:var(--muted);white-space:nowrap}
+
+.providers{margin-top:calc(20 * var(--u));display:grid;grid-template-columns:repeat(3,1fr);gap:calc(10 * var(--u))}
+.provider{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(4 * var(--u));
+  height:calc(58 * var(--u));width:100%;
+  border:calc(1 * var(--u)) solid var(--line);background:#fff;box-shadow:var(--shadow-xs);cursor:pointer;
+  font-size:calc(13 * var(--u));line-height:calc(18 * var(--u));font-weight:500;color:var(--ink);
+  transition:background-color .15s ease,border-color .15s ease;
+}
+.provider small{font-size:calc(11 * var(--u));color:#8a877e;font-weight:400}
+@media (hover:hover){.provider:hover{border-color:var(--gold)}}
+.provider:focus-visible{outline:calc(2 * var(--u)) solid var(--gold);outline-offset:calc(2 * var(--u))}
+
+.switch{margin:calc(22 * var(--u)) 0 0;text-align:center;font-size:calc(14 * var(--u));line-height:calc(20 * var(--u));color:var(--muted)}
+.switch a{font-weight:600;color:var(--ink);border-bottom:calc(1 * var(--u)) solid var(--gold)}
+
+.auth__foot{padding:calc(22 * var(--u)) calc(24 * var(--u)) calc(30 * var(--u));display:flex;justify-content:center;gap:calc(14 * var(--u))}
+.auth__foot a{font-size:calc(13 * var(--u));line-height:calc(20 * var(--u));color:var(--muted)}
+@media (hover:hover){.auth__foot a:hover{color:var(--ink)}}
+
+@media (pointer:coarse){.input{font-size:max(16px, calc(15 * var(--u)))}}
+
+/* ============================ 모바일 (< 740px) ============================
+   [어두운 띠] 로고 · 헤드라인 → [아이보리] 상담 폼 → [어두운 띠] 서비스 카드 · 거점 · 저작권 */
+@media (max-width:739.98px){
+  :root{--g:clamp(16px, 5vw, 32px)}
+  .shell{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto 1fr auto auto auto auto}
+  .shell::before,.shell::after{
+    content:"";grid-column:1;z-index:0;
+    background:linear-gradient(180deg,rgba(10,10,9,.55),rgba(10,10,9,.85)),var(--brand-img) 64% center / cover no-repeat,#121310;
+  }
+  .shell::before{grid-row:1 / 3}
+  .shell::after{grid-row:6 / 9}
+  .brand,.brand__mid,.auth{display:contents}
+  .brand::before,.brand::after{display:none}
+  .brand__top,.hero,.auth__top,.auth__main,.auth__foot,.reel,.trust,.brand__bottom{grid-column:1;position:relative;z-index:1}
+  .brand__top{grid-row:1}.hero{grid-row:2}.auth__top{grid-row:3}.auth__main{grid-row:4}.auth__foot{grid-row:5}
+  .reel{grid-row:6}.trust{grid-row:7}.brand__bottom{grid-row:8}
+  .brand__inset{--inset:var(--g);--measure:min(100%, 480px);padding-left:var(--g);padding-right:var(--g)}
+  .brand__top{padding-top:calc(20px + env(safe-area-inset-top))}
+  .hero{padding-top:30px;padding-bottom:34px}
+  .hero__title{font-size:clamp(26px, 7.4vw, 31px)}
+  .auth__top{display:none}
+  .reel{margin-top:40px;height:250px;overflow:clip}
+  .reel__track{animation-name:reel-m;transform:translateX(var(--g))}
+  @keyframes reel-m{from{transform:translateX(var(--g))}to{transform:translateX(calc(var(--g) - 1330px))}}
+  .trust{margin-top:34px}
+  .brand__bottom{padding-top:34px;padding-bottom:calc(28px + env(safe-area-inset-bottom))}
+  .auth__main{align-items:flex-start;padding:30px var(--g) 8px}
+  .input{height:46px;font-size:16px}
+  .passkey-slot{height:54px}.cta-slot{height:50px}.provider{height:62px}
+  .check{padding-block:6px;margin-block:-6px}
+  .link-strong{padding-block:8px}
+  .auth__foot{padding:4px var(--g) 28px;gap:4px}.auth__foot a{padding:12px 6px}
+}
+@media (max-width:360px){.pair{grid-template-columns:1fr}.pair .field + .field{margin-top:14px}}
+
+@media (prefers-reduced-motion:reduce){
+  .reel__track{animation:none}
+  .brand::before,.brand::after{animation:none}
+  *{transition:none!important}
+}
+
+/* 등장 애니메이션 준비 상태 (스크립트가 첫 프레임에 해제, 3초 안전장치) */
+html.is-entering :is(
+  .logo__mark,.logo__word,.eyebrow,.hero__title,.hero__copy,.card,
+  .trust__label,.marks__row,.legal,
+  .panel__title,.panel__sub,.passkey-slot,.field,.row,.cta-slot,.demo,.or span,.provider,.switch,.auth__foot a,.back
+){opacity:0}
+html.is-entering :is(.or,.trust__rule)::before,
+html.is-entering :is(.or,.trust__rule)::after{opacity:0}
+.e-line{display:block;clip-path:inset(0 -.1em -.25em -.1em)}
+.e-in{display:block}
+</style>
+<script>
+(function(){var d=document.documentElement;
+  if(!('animate' in d)||(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches))return;
+  d.classList.add('is-entering');
+  window.__entranceFailsafe=setTimeout(function(){d.classList.remove('is-entering')},3000);
+})();
+</script>
+</head>
+<body>
+<div class="shell">
+
+  <!-- ============================ 브랜드 패널 ============================ -->
+  <aside class="brand" aria-label="DK글로벌 코리아 소개">
+    <div class="brand__inset brand__top">
+      <a class="logo" href="../concept-a-v2/" aria-label="DK글로벌 코리아 홈">
+        <span class="logo__mark" aria-hidden="true">DK</span>
+        <span class="logo__word">DK글로벌 코리아<small>VIP CHAUFFEUR · DAEGU</small></span>
+      </a>
+    </div>
+
+    <div class="brand__mid">
+      <div class="brand__inset hero">
+        <span class="eyebrow">CONSULTATION</span>
+        <h2 class="hero__title">중요한 일정에, 품격&nbsp;있는&nbsp;이동.</h2>
+        <p class="hero__copy">대구·경북 VIP 의전부터 공항 이동과 비즈니스 일정까지. 차량과 전문기사를 일정에 맞춰 상담해드립니다.</p>
+      </div>
+
+      <div class="reel" aria-label="상담 가능한 서비스">
+        <div class="reel__track">
+          <figure class="card"><div><span class="card__no">01</span><p class="card__title">VIP·임원·귀빈 의전</p><p class="card__text">맞이할 장소와 주요 일정을 바탕으로 중요한 손님의 의전 이동을 준비합니다.</p></div><figcaption class="card__foot"><span>VIP PROTOCOL</span><span class="card__badge" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9Z"/></svg></span></figcaption></figure>
+          <figure class="card"><div><span class="card__no">02</span><p class="card__title">기업 출장·바이어 방문</p><p class="card__text">미팅 장소와 방문 일정을 연결하는 비즈니스 이동을 상담합니다.</p></div><figcaption class="card__foot"><span>BUSINESS</span><span class="card__badge" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13"/><path d="M8 7V4h8v3"/></svg></span></figcaption></figure>
+          <figure class="card"><div><span class="card__no">03</span><p class="card__title">공항·기차역 픽업과 샌딩</p><p class="card__text">항공편·열차 시간, 동행 인원과 수하물을 함께 확인해 이동 계획을 세웁니다.</p></div><figcaption class="card__foot"><span>AIRPORT · STATION</span><span class="card__badge" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 16 22 8"/><path d="m10 13-3 7"/><path d="m14 11 4 6"/></svg></span></figcaption></figure>
+          <figure class="card"><div><span class="card__no">04</span><p class="card__title">국제회의·전시회·컨벤션</p><p class="card__text">여러 차량과 장소가 필요한 일정도 상세 동선을 기준으로 상담합니다.</p></div><figcaption class="card__foot"><span>CONVENTION</span><span class="card__badge" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12"/><path d="M12 16v4M8 20h8"/></svg></span></figcaption></figure>
+          <figure class="card"><div><span class="card__no">05</span><p class="card__title">프라이빗 여행·골프장 이동</p><p class="card__text">동행 인원과 여행 계획에 맞춰 여유로운 이동을 계획합니다.</p></div><figcaption class="card__foot"><span>PRIVATE</span><span class="card__badge" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 21V3l10 4-10 4"/></svg></span></figcaption></figure>
+          <!-- 끊김 없는 반복을 위한 복제본 -->
+          <figure class="card" aria-hidden="true"><div><span class="card__no">01</span><p class="card__title">VIP·임원·귀빈 의전</p><p class="card__text">맞이할 장소와 주요 일정을 바탕으로 중요한 손님의 의전 이동을 준비합니다.</p></div><figcaption class="card__foot"><span>VIP PROTOCOL</span><span class="card__badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9Z"/></svg></span></figcaption></figure>
+          <figure class="card" aria-hidden="true"><div><span class="card__no">02</span><p class="card__title">기업 출장·바이어 방문</p><p class="card__text">미팅 장소와 방문 일정을 연결하는 비즈니스 이동을 상담합니다.</p></div><figcaption class="card__foot"><span>BUSINESS</span><span class="card__badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13"/><path d="M8 7V4h8v3"/></svg></span></figcaption></figure>
+          <figure class="card" aria-hidden="true"><div><span class="card__no">03</span><p class="card__title">공항·기차역 픽업과 샌딩</p><p class="card__text">항공편·열차 시간, 동행 인원과 수하물을 함께 확인해 이동 계획을 세웁니다.</p></div><figcaption class="card__foot"><span>AIRPORT · STATION</span><span class="card__badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 16 22 8"/><path d="m10 13-3 7"/><path d="m14 11 4 6"/></svg></span></figcaption></figure>
+          <figure class="card" aria-hidden="true"><div><span class="card__no">04</span><p class="card__title">국제회의·전시회·컨벤션</p><p class="card__text">여러 차량과 장소가 필요한 일정도 상세 동선을 기준으로 상담합니다.</p></div><figcaption class="card__foot"><span>CONVENTION</span><span class="card__badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12"/><path d="M12 16v4M8 20h8"/></svg></span></figcaption></figure>
+        </div>
+      </div>
+
+      <div class="brand__inset trust">
+        <div class="trust__rule"><span class="trust__label">이런 이동을 상담합니다</span></div>
+        <div class="marks" aria-label="상담 가능한 이동 유형">
+          <div class="marks__row">
+            <span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 16 22 8"/><path d="m10 13-3 7"/></svg>공항</span>
+            <span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="6" y="3" width="12" height="14" rx="3"/><path d="m8 21 2-4m6 4-2-4"/></svg>기차역</span>
+            <span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 21V5l8-2 8 2v16"/><path d="M10 21v-5h4v5"/></svg>호텔</span>
+            <span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12"/><path d="M12 16v4"/></svg>컨벤션</span>
+          </div>
+          <div class="marks__row">
+            <span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M7 21V3l10 4-10 4"/></svg>골프장</span>
+            <span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18"/><path d="M9 7h2m2 0h2M9 11h2m2 0h2M9 15h2m2 0h2"/></svg>기업 방문</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="brand__inset brand__bottom">
+      <p class="legal">© 2026 DK글로벌 코리아 · AI 연출 이미지, 실제 차량은 상담 시 확인</p>
+    </div>
+  </aside>
+
+  <!-- ============================ 상담 패널 ============================ -->
+  <main class="auth">
+    <div class="auth__top"><a class="back" href="../concept-a-v2/"><span aria-hidden="true">←</span> 홈으로</a></div>
+    <div class="auth__main">
+      <section class="panel" aria-labelledby="consult-title">
+        <h1 class="panel__title" id="consult-title">어떤 이동을 준비하세요?</h1>
+        <p class="panel__sub">연락처만 남겨 주시면 일정에 맞춰 상담해드립니다.</p>
+
+        <div class="passkey-slot">
+          <!-- TODO: 실제 전화번호로 교체 → <a class="passkey" href="tel:010-0000-0000"> -->
+          <button class="passkey" type="button" data-contact="전화번호">
+            <svg class="passkey__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2Z"/></svg>
+            <span class="passkey__label">전화로 바로 상담하기</span>
+            <span class="pill">가장 빠름</span>
+          </button>
+        </div>
+
+        <div class="or or--top" role="separator"><span>또는 상담 요청 남기기</span></div>
+
+        <form class="form" id="consult" novalidate>
+          <div class="field">
+            <label class="label" for="name">이름 또는 담당자명<em>*</em></label>
+            <div class="control">
+              <svg class="control__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+              <input class="input" id="name" name="name" type="text" autocomplete="off" placeholder="데모용 가상 이름" required maxlength="60">
+            </div>
+          </div>
+          <div class="field">
+            <label class="label" for="phone">연락처<em>*</em></label>
+            <div class="control">
+              <svg class="control__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg>
+              <input class="input" id="phone" name="phone" type="tel" autocomplete="off" placeholder="데모용 가상 연락처" required maxlength="50">
+            </div>
+          </div>
+          <div class="pair">
+            <div class="field">
+              <label class="label" for="purpose">이용 목적<em>*</em></label>
+              <div class="control">
+                <svg class="control__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18M3 6h18M3 18h12"/></svg>
+                <select class="input" id="purpose" name="purpose" required>
+                  <option value="">선택</option>
+                  <option>VIP·귀빈 의전</option>
+                  <option>기업 출장·바이어</option>
+                  <option>공항·역 픽업</option>
+                  <option>회의·전시·행사</option>
+                  <option>여행·골프</option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label class="label" for="date">이용 날짜</label>
+              <div class="control">
+                <svg class="control__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16"/><path d="M3 10h18M8 3v4m8-4v4"/></svg>
+                <input class="input" id="date" name="date" type="date">
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <label class="check">
+              <input type="checkbox" name="agree" id="agree" required>
+              <span class="check__box" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+              <span>상담을 위한 개인정보 이용 동의</span>
+            </label>
+            <a class="link-strong" href="#privacy">내용 보기</a>
+          </div>
+
+          <div class="cta-slot"><button class="cta" type="submit">상담 요청 보내기 <span aria-hidden="true">↗</span></button></div>
+          <p class="demo">디자인 데모 · 입력 정보는 전송·저장되지 않습니다.</p>
+          <p class="status" id="status" role="status" tabindex="-1" hidden></p>
+        </form>
+
+        <div class="or" role="separator"><span>또는 메신저로 문의</span></div>
+
+        <div class="providers">
+          <!-- TODO: 실제 채널 주소로 교체 -->
+          <button class="provider" type="button" data-contact="카카오톡 채널"><span>카카오톡</span><small>채널 상담</small></button>
+          <button class="provider" type="button" data-contact="WhatsApp 번호"><span>WhatsApp</span><small>International</small></button>
+          <button class="provider" type="button" data-contact="이메일 주소"><span>이메일</span><small>기업·행사</small></button>
+        </div>
+
+        <p class="switch">일정이 자세히 정해졌나요? <a href="../concept-a-v2/#quote">상세 상담 양식 작성</a></p>
+      </section>
+    </div>
+
+    <nav class="auth__foot" aria-label="정책">
+      <a href="#terms">이용약관</a><a href="#privacy">개인정보처리방침</a><a href="#business">사업자 정보</a>
+    </nav>
+  </main>
+</div>
+
+<script>
+(() => {
+  const status = document.getElementById('status');
+  const say = msg => { status.textContent = msg; status.hidden = false; status.focus({ preventScroll: true }); };
+  document.querySelectorAll('[data-contact]').forEach(el => el.addEventListener('click', () =>
+    say(el.dataset.contact + '은(는) 실제 정보를 받은 뒤 연결됩니다. (시안)')));
+  document.getElementById('consult').addEventListener('submit', e => {
+    e.preventDefault();
+    const bad = [...e.target.querySelectorAll('[required]')].find(i => i.type === 'checkbox' ? !i.checked : !i.value.trim());
+    if (bad) { bad.focus(); say('필수 항목을 확인해 주세요.'); return; }
+    say('데모 미리보기입니다. 실제로 접수되지 않았으며, 입력한 정보는 전송·저장되지 않습니다.');
+  });
+})();
+
+/* 등장 타임라인 (Keylight 방식, Web Animations API) — 한 번 재생 후 정지 */
+(() => {
+  const root = document.documentElement;
+  if (!root.classList.contains('is-entering')) return;
+  let started = false;
+  const EXPO = 'cubic-bezier(.16,1,.3,1)', QUINT = 'cubic-bezier(.22,1,.36,1)', DRAW = 'cubic-bezier(.65,0,.35,1)', SOFT = 'cubic-bezier(.33,1,.68,1)';
+  const start = () => {
+    if (started) return; started = true;
+    clearTimeout(window.__entranceFailsafe);
+    try { run(); } catch (e) { root.classList.remove('is-entering'); }
+  };
+  Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 400))]).then(() => requestAnimationFrame(start));
+
+  function run() {
+    const $ = (s, c = document) => c.querySelector(s);
+    const $$ = (s, c = document) => [...c.querySelectorAll(s)];
+    const W = innerWidth, H = innerHeight;
+    const probe = document.createElement('div');
+    probe.style.cssText = 'position:absolute;visibility:hidden;width:calc(100 * var(--u))';
+    document.body.appendChild(probe);
+    const u = probe.getBoundingClientRect().width / 100 || 1;
+    probe.remove();
+    const k = matchMedia('(max-width:739.98px)').matches ? .75 : 1;
+    const d = px => +(px * u * k).toFixed(2);
+    const anims = [], restores = [];
+    const inView = el => { const r = el.getBoundingClientRect(); return r.height > 0 && r.bottom > 0 && r.top < H && r.right > 0 && r.left < W; };
+    const play = (el, frames, delay, duration, easing, pseudoElement) => {
+      const opts = { delay, duration, easing, fill: 'both' };
+      if (pseudoElement) opts.pseudoElement = pseudoElement;
+      anims.push(el.animate(frames, opts));
+    };
+    const RISE = (el, t, dur = 950, stagger = 90) => {
+      if (!el || !inView(el)) return;
+      splitLines(el).forEach((line, i) => play(line, [{ transform: 'translateY(125%)' }, { transform: 'none' }], t + i * stagger, dur, EXPO));
+    };
+    const SETTLE = (el, t, y = 10, dur = 640, scale) => {
+      if (!el || !inView(el)) return;
+      const from = `translate3d(0,${d(y)}px,0)` + (scale ? ` scale(${scale})` : '');
+      play(el, [{ opacity: 0, transform: from }, { opacity: 1, transform: 'none' }], t, dur, QUINT);
+    };
+    const LIFT = (el, t) => {
+      if (!el || !inView(el)) return;
+      play(el, [{ opacity: 0, transform: `translate3d(0,${d(28)}px,0) scale(.985)` }, { opacity: 1, transform: 'none' }], t, 1050, EXPO);
+    };
+    const DRAWN = (el, pseudo, t, origin) => {
+      if (!el || !inView(el)) return;
+      play(el, [{ opacity: 1, transformOrigin: origin, transform: 'scaleX(0)' }, { opacity: 1, transformOrigin: origin, transform: 'scaleX(1)' }], t, 760, DRAW, pseudo);
+    };
+    const PRESENCE = (el, t, dur = 520) => {
+      if (!el || !inView(el)) return;
+      play(el, [{ opacity: 0 }, { opacity: 1 }], t, dur, SOFT);
+    };
+    function splitLines(el) {
+      const original = el.innerHTML;
+      const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+      const words = el.textContent.trim().split(/[ \t\n\r]+/); // 줄바꿈 없는 공백(&nbsp;)은 한 단어로 유지
+      el.innerHTML = words.map(w => `<span class="e-w">${esc(w)}</span>`).join(' ');
+      const lines = []; let top = null;
+      $$('.e-w', el).forEach(s => { if (s.offsetTop !== top) { top = s.offsetTop; lines.push([]); } lines[lines.length - 1].push(s.textContent); });
+      el.innerHTML = lines.map(l => `<span class="e-line"><span class="e-in">${l.map(esc).join(' ')}</span></span>`).join('');
+      restores.push(() => { el.innerHTML = original; });
+      return $$('.e-in', el);
+    }
+
+    SETTLE($('.logo__mark'), 0, 0, 760, .86);
+    if (inView($('.logo__word')))
+      play($('.logo__word'), [{ opacity: 1, clipPath: 'inset(-30% 100% -30% 0)', transform: `translate3d(${-d(8)}px,0,0)` },
+                              { opacity: 1, clipPath: 'inset(-30% -6% -30% 0)', transform: 'none' }], 90, 860, EXPO);
+    PRESENCE($('.eyebrow'), 120, 600);
+    RISE($('.hero__title'), 160);
+    PRESENCE($('.back'), 300, 480);
+    RISE($('.panel__title'), 320, 860);
+    SETTLE($('.panel__sub'), 430, 8, 600);
+    SETTLE($('.passkey-slot'), 500, 10, 680, .985);
+    const orTop = $('.or--top');
+    DRAWN(orTop, '::before', 560, 'right center');
+    DRAWN(orTop, '::after', 560, 'left center');
+    PRESENCE($('.or--top span'), 600, 480);
+    SETTLE($('.hero__copy'), 470, 12, 720);
+    $$('.form .field, .form .row').forEach((el, i) => SETTLE(el, 620 + i * 70, 10, 620));
+    SETTLE($('.cta-slot'), 900, 10, 680, .985);
+    PRESENCE($('.demo'), 980, 480);
+    $$('.card').filter(inView).sort((a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left).forEach((c, i) => LIFT(c, 620 + i * 90));
+    const or = $('.or:not(.or--top)');
+    DRAWN(or, '::before', 960, 'right center');
+    DRAWN(or, '::after', 960, 'left center');
+    PRESENCE($('.or:not(.or--top) span'), 1000, 480);
+    $$('.provider').forEach((el, i) => SETTLE(el, 1020 + i * 60, 8, 560));
+    const rule = $('.trust__rule');
+    DRAWN(rule, '::before', 1000, 'right center');
+    DRAWN(rule, '::after', 1000, 'left center');
+    PRESENCE($('.trust__label'), 1060);
+    PRESENCE($('.switch'), 1120);
+    $$('.marks__row').forEach((el, i) => PRESENCE(el, 1140 + i * 80, 600));
+    $$('.auth__foot a').forEach((el, i) => PRESENCE(el, 1180 + i * 40, 480));
+    PRESENCE($('.legal'), 1280, 520);
+
+    root.classList.remove('is-entering');
+    Promise.all(anims.map(a => a.finished)).then(() => {
+      anims.forEach(a => a.cancel());
+      restores.forEach(f => f());
+    }, () => restores.forEach(f => f()));
+  }
+})();
+</script>
+</body>
+</html>
